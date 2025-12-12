@@ -1,0 +1,342 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Documentation Portal</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/company-favicon.png" />
+
+  <!-- Fonts (system UI stack) -->
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1b1b1b;
+      --muted: #6b7280;
+      --brand: #2563eb;
+      --brand-2: #0ea5e9;
+      --border: #e5e7eb;
+      --sidebar-bg: #f8fafc;
+      --toc-bg: #fafafa;
+      --focus: #f59e0b;
+
+      --header-h: 64px;
+      --sidebar-w: 280px;
+      --toc-w: 320px;
+      --content-max: 1100px;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img { max-width: 100%; height: auto; }
+
+    /* App layout: sticky header + 3 columns */
+    .app {
+      display: grid;
+      grid-template-rows: var(--header-h) 1fr;
+      min-height: 100vh;
+    }
+    header[role="banner"] {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr; /* left | center | right */
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-left, .header-center, .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-left { justify-content: flex-start; }
+    .header-center { justify-content: center; }
+    .header-right { justify-content: flex-end; }
+
+    .company-name {
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      font-size: 1.15rem;
+      color: var(--brand);
+      text-align: center;
+    }
+
+    main[role="main"] {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--toc-w);
+      gap: 16px;
+      padding: 16px;
+    }
+
+    /* Panels */
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 10px 12px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+      background: #fcfcfd;
+    }
+
+    /* Sidebar: manuals list */
+    .sidebar { background: var(--sidebar-bg); }
+    .manual-list { list-style: none; padding: 0; margin: 0; }
+    .manual-item {
+      padding: 10px 12px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .manual-item:last-child { border-bottom: none; }
+    .manual-item button {
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .manual-item button:hover,
+    .manual-item button:focus {
+      outline: none;
+      border-color: var(--brand-2);
+      background: #eef6ff;
+    }
+    .manual-item.active button {
+      background: #e8f1ff;
+      border-color: var(--brand);
+      font-weight: 600;
+    }
+
+    /* Content */
+    .content {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 16px 20px;
+    }
+    .content h1, .content h2, .content h3, .content h4 {
+      scroll-margin-top: calc(var(--header-h) + 12px);
+    }
+    .doc-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
+    .content pre, .content code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    .content pre {
+      background: #f7f7f9;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      overflow: auto;
+    }
+    .callout {
+      border-left: 4px solid var(--brand);
+      background: #f0f7ff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin: 12px 0;
+    }
+
+    /* TOC (right) */
+    .toc {
+      background: var(--toc-bg);
+      position: sticky;
+      top: calc(var(--header-h) + 16px);
+      align-self: start;
+      max-height: calc(100vh - var(--header-h) - 32px);
+      overflow: auto;
+    }
+    .toc-nav { padding: 10px 12px; }
+    .toc-nav ul { list-style: none; padding-left: 0; }
+    .toc-nav li { margin: 6px 0; }
+    .toc-link {
+      display: inline-block;
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: var(--text);
+    }
+    .toc-link:hover { background: #eef2ff; }
+    .toc-link.level-2 { margin-left: 0; font-weight: 600; }
+    .toc-link.level-3 { margin-left: 10px; color: var(--muted); }
+    .toc-link.level-4 { margin-left: 20px; color: var(--muted); }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      main[role="main"] { grid-template-columns: var(--sidebar-w) 1fr; }
+      .toc { display: none; } /* Hide TOC on smaller screens */
+    }
+    @media (max-width: 768px) {
+      header[role="banner"] { grid-template-columns: 1fr auto; }
+      .header-center { display: none; } /* Hide company name on small screens */
+      main[role="main"] { grid-template-columns: 1fr; }
+      .sidebar { order: 1; }
+      .content { order: 2; }
+    }
+
+    /* Accessibility focus */
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+  </style>
+
+  <!-- Markdown parser (Marked) + sanitizer (DOMPurify) from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js" defer></script>
+</head>
+
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header role="banner" aria-label="Site header">
+      <div class="header-left">
+        <a href="#" aria-label="Home">
+          <img src="assets/company-logo.png" alt="Company logo" style="height:40px;" />
+        </a>
+      </div>
+
+      <div class="header-center">
+        <div class="company-name" aria-label="Company name">Your Company Name</div>
+      </div>
+
+      <div class="header-right">
+        <img src="assets/partner-logo.png" alt="Partner logo" style="height:40px;" />
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main role="main" aria-label="Documentation layout">
+      <!-- Left: Manuals list -->
+      <aside class="panel sidebar" aria-label="Manuals list" id="manualsPanel">
+        <div class="panel-header">User Manuals</div>
+        <nav aria-label="Manual navigation">
+          <ul class="manual-list" id="manualList"></ul>
+        </nav>
+      </aside>
+
+      <!-- Middle: Selected Manual Content -->
+      <section class="panel content" aria-label="Manual content">
+        <div class="panel-header" id="docTitle">Select a manual</div>
+        <article id="docContent" tabindex="0" aria-live="polite" aria-busy="false">
+          <p class="doc-meta">Choose a manual from the left. The table of contents will appear on the right.</p>
+        </article>
+      </section>
+
+      <!-- Right: TOC -->
+      <aside class="panel toc" aria-label="Table of contents">
+        <div class="panel-header">Contents</div>
+        <nav class="toc-nav" id="tocNav" aria-label="Document table of contents"></nav>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    // Wait for Marked + DOMPurify
+    window.addEventListener('load', () => {
+      // -------------------------------
+      // Configure Marked renderer
+      // -------------------------------
+      marked.setOptions({
+        breaks: true,           // Treat single line breaks as <br>
+        gfm: true,              // GitHub Flavored Markdown
+        headerIds: true,        // Generate IDs for headings
+        mangle: false           // Keep heading text as-is in IDs
+      });
+
+      // -------------------------------
+      // Manuals list (Markdown files)
+      // Put your Markdown files in /docs and list them here
+      // -------------------------------
+      const manuals = [
+        { id: 'getting-started', title: 'Getting Started Guide', file: 'docs/getting-started.md', meta: 'Version 1.0 · Updated Oct 2025' },
+        { id: 'admin-console',   title: 'Admin Console Manual',  file: 'docs/admin-console.md',   meta: 'Version 3.2 · Updated Nov 2025' },
+        { id: 'api-reference',   title: 'API Reference',         file: 'docs/api-reference.md',   meta: 'Version 2.7 · Updated Sep 2025' }
+      ];
+
+      const manualListEl = document.getElementById('manualList');
+      const docTitleEl = document.getElementById('docTitle');
+      const docContentEl = document.getElementById('docContent');
+      const tocNavEl = document.getElementById('tocNav');
+
+      // Render manual list
+      function renderManualList() {
+        manualListEl.innerHTML = '';
+        manuals.forEach((m, idx) => {
+          const li = document.createElement('li');
+          li.className = 'manual-item';
+          li.dataset.id = m.id;
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = m.title;
+          btn.setAttribute('aria-controls', 'docContent');
+          btn.setAttribute('aria-label', `Open manual: ${m.title}`);
+          btn.addEventListener('click', () => selectManual(m.id));
+
+          li.appendChild(btn);
+          manualListEl.appendChild(li);
+
+          if (idx === 0) li.classList.add('active');
+        });
+      }
+
+      // Fetch & render selected manual (Markdown -> HTML)
+      async function selectManual(id) {
+        const manual = manuals.find(m => m.id === id);
+        if (!manual) return;
+
+        // Active state in sidebar
+        Array.from(manualListEl.children).forEach(li => {
+          li.classList.toggle('active', li.dataset.id === id);
+        });
+
+        // Update title
+        docTitleEl.textContent = manual.title;
+
+        // Fetch Markdown
+        docContentEl.setAttribute('aria-busy', 'true');
+        docContentEl.innerHTML = `<p class="doc-meta">${manual.meta}</p><p>Loading content…</p>`;
+
+        try {
+          const res = await fetch(manual.file, { cache: 'no-store' });
+          if (!res.ok) throw new Error(`Failed to load ${manual.file}: ${res.status}`);
+          const md = await res.text();
+
+          // Convert Markdown → HTML and sanitize
+          const rawHtml = marked.parse(md);
+          const safeHtml = DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
+
+          // Render
+          docContentEl.innerHTML = `<p class="doc-meta">${manual.meta}</p>${safeHtml}`;
+          docContentEl.setAttribute('aria-busy', 'false');
+          docContentEl.focus({ preventScroll: true });
+
+          // Build TOC from headings
+          buildTOC();
+
+          // Update URL hash & remember selection
+          history.replaceState(null, '', `#${id}`);
+          localStorage.setItem('lastManualId', id);
+        } catch (err) {
+          console.error(err);
+          docContentEl.innerHTML = `
+            <p class="doc-meta">${manual.meta}</p>
