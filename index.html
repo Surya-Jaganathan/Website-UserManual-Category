@@ -6,26 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Manuals Portal</title>
 
-  <!--
-    ===========================================================
-    ✨ PAGE OVERVIEW
-    - Header: Menu button (left), Company logo, Company name (italic), Partner logo (right)
-    - Middle panel: Selected manual rendered from Markdown (GitHub RAW URLs)
-    - Right panel: Collapsible Table of Contents (TOC), auto-built from headings
-    - Full-screen Menu: Two rows → (1) Index list of manuals, (2) Theme switch
-    ===========================================================
-    🔧 Where to paste your Markdown links:
-      Scroll down to: const MANUALS_DATA = [ ... ]
-      Fill each item's: id, name, url (RAW GitHub link to .md)
-      Example RAW URL:
-        https://raw.githubusercontent.com/your-org/your-repo/main/docs/getting-started.md
-    ===========================================================
-  -->
-
   <style>
-    /* =========================
-       THEME SYSTEM (Light/Dark)
-       ========================= */
     :root { color-scheme: light dark; }
     :root[data-theme="dark"] {
       --bg: #0f172a;
@@ -52,12 +33,9 @@
       --shadow: 0 8px 24px rgba(0,0,0,0.08);
     }
 
-    /* =========================
-       Reset + Base
-       ========================= */
     * { box-sizing: border-box; }
     html, body { height: 100%; }
-    html { scroll-behavior: smooth; } /* nice anchor scrolling */
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
@@ -69,68 +47,47 @@
     a { color: var(--link); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* =========================
-       Header
-       ========================= */
     .site-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      position: sticky; top: 0; z-index: 100;
       display: grid;
       grid-template-columns: auto auto 1fr auto; /* menu, company logo, title, partner logo */
-      align-items: center;
-      gap: .75rem;
+      align-items: center; gap: .75rem;
       padding: .6rem .9rem;
       background: color-mix(in oklab, var(--panel) 70%, transparent);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border);
     }
 
-    /* Menu button (left of company logo) */
     .menu-btn {
       display: inline-flex; align-items: center; justify-content: center;
       width: 38px; height: 38px;
       border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      border-radius: 10px;
-      box-shadow: var(--shadow);
+      background: var(--panel); color: var(--text);
+      border-radius: 10px; box-shadow: var(--shadow);
       cursor: pointer;
     }
     .menu-btn:hover { background: color-mix(in oklab, var(--panel) 88%, white 12%); }
     .menu-btn svg { width: 20px; height: 20px; }
 
-    .site-header .logo {
-      display: flex;
-      align-items: center;
-      height: 40px;
-    }
+    .site-header .logo { display: flex; align-items: center; height: 40px; }
     .site-header .logo img {
-      max-height: 100%;
-      max-width: 180px;
-      object-fit: contain;
+      max-height: 100%; max-width: 180px; object-fit: contain;
       filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
     }
 
     .site-header .site-title {
       text-align: center;
-      font-style: italic;                /* ← requested italic */
+      font-style: italic; /* requested italic */
       font-weight: 700;
       letter-spacing: 0.25px;
       font-size: clamp(1rem, 2.5vw, 1.25rem);
       color: var(--text);
     }
 
-    /* =========================
-       Layout grid (no left index)
-       ========================= */
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 320px; /* content + TOC */
-      gap: 1rem;
-      padding: 1rem;
-      max-width: 1700px;
-      margin: 0 auto;
+      gap: 1rem; padding: 1rem; max-width: 1700px; margin: 0 auto;
     }
 
     .panel {
@@ -143,35 +100,23 @@
     .panel-header {
       padding: .6rem .8rem;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       background: color-mix(in oklab, var(--panel) 96%, white 4%);
     }
     .panel-header h2 { margin: 0; font-size: .95rem; font-weight: 600; color: var(--text); }
 
-    /* Collapse button for TOC */
     .collapse-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: .35rem;
-      font-size: .85rem;
-      color: var(--muted);
+      display: inline-flex; align-items: center; gap: .35rem;
+      font-size: .85rem; color: var(--muted);
       border: 1px solid var(--border);
       background: transparent;
-      padding: .25rem .5rem;
-      border-radius: 8px;
-      cursor: pointer;
+      padding: .25rem .5rem; border-radius: 8px; cursor: pointer;
     }
     .collapse-btn:hover { color: var(--text); background: color-mix(in oklab, var(--panel) 88%, white 12%); }
     .collapse-btn svg { width: 16px; height: 16px; }
-
-    /* Hide only panel body when collapsed (button stays visible) */
     .panel.collapsed .panel-body { display: none; }
     .panel.collapsed { min-height: 48px; }
 
-    /* Middle: Markdown viewer */
-    .content { position: relative; }
     .content .panel-body {
       overflow-y: auto; max-height: calc(100vh - 170px);
       padding: 1rem 1.25rem;
@@ -180,7 +125,7 @@
     .markdown-body h1, .markdown-body h2, .markdown-body h3,
     .markdown-body h4, .markdown-body h5, .markdown-body h6 {
       margin: 1.2rem 0 .6rem;
-      scroll-margin-top: 80px; /* sticky header offset for anchor targets */
+      scroll-margin-top: 80px;
     }
     .markdown-body h1 { font-size: 1.9rem; }
     .markdown-body h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: .25rem; }
@@ -189,25 +134,15 @@
     .markdown-body code { background: color-mix(in oklab, var(--panel) 85%, white 15%); padding: 0 .25rem; border-radius: 4px; }
     .markdown-body pre {
       background: color-mix(in oklab, var(--panel) 85%, white 15%);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: .9rem;
-      overflow: auto;
+      border: 1px solid var(--border); border-radius: 10px; padding: .9rem; overflow: auto;
     }
     .markdown-body table { width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .95rem; }
     .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: .5rem .6rem; }
     .markdown-body img { max-width: 100%; height: auto; border-radius: 8px; }
-    .placeholder {
-      border: 1px dashed var(--border);
-      padding: 1rem; border-radius: 12px; background: color-mix(in oklab, var(--panel) 92%, white 8%);
-    }
 
-    /* Right: TOC */
     .toc .panel-body { overflow-y: auto; max-height: calc(100vh - 170px); }
     .toc nav { padding: .25rem .5rem; }
-    .toc a {
-      display: block; padding: .35rem .5rem; border-radius: 8px; color: var(--muted);
-    }
+    .toc a { display: block; padding: .35rem .5rem; border-radius: 8px; color: var(--muted); }
     .toc a:hover { background: color-mix(in oklab, var(--panel) 90%, white 10%); color: var(--text); }
     .toc .level-1 { margin-left: 0; font-weight: 700; color: var(--text); }
     .toc .level-2 { margin-left: .5rem; }
@@ -215,36 +150,26 @@
     .toc .level-4 { margin-left: 1.5rem; font-size: .95rem; }
     .toc .level-5, .toc .level-6 { margin-left: 2rem; font-size: .9rem; }
 
-    /* Responsive adjustments */
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       .toc { grid-column: 1 / -1; }
       .toc .panel-body { max-height: none; }
     }
 
-    /* =========================
-       Full-screen Menu (two rows)
-       ========================= */
     .menu-overlay {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: color-mix(in oklab, var(--bg) 70%, black 30%);
       backdrop-filter: blur(4px);
-      display: none;
-      z-index: 300;
+      display: none; z-index: 300;
     }
     .menu-overlay.open { display: block; }
-
     .menu-dialog {
-      position: absolute;
-      left: 50%; top: 50%;
+      position: absolute; left: 50%; top: 50%;
       transform: translate(-50%, -50%);
-      width: min(900px, 92vw);
-      max-height: 80vh;
+      width: min(900px, 92vw); max-height: 80vh;
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
+      border-radius: 16px; box-shadow: var(--shadow);
       overflow: hidden;
     }
     .menu-header {
@@ -252,23 +177,16 @@
       padding: .6rem .9rem; border-bottom: 1px solid var(--border);
     }
     .menu-body {
-      display: grid; grid-template-rows: 1fr auto; /* Row1: Index, Row2: Theme */
-      gap: 0; max-height: calc(80vh - 56px);
+      display: grid; grid-template-rows: 1fr auto;
+      max-height: calc(80vh - 56px);
     }
-    .menu-section {
-      padding: .9rem; overflow: auto;
-      border-bottom: 1px dashed var(--border);
-    }
+    .menu-section { padding: .9rem; overflow: auto; border-bottom: 1px dashed var(--border); }
     .menu-title { margin: 0 0 .5rem; font-size: 1rem; font-weight: 600; }
-
     .menu-close {
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
+      border: 1px solid var(--border); background: transparent; color: var(--muted);
       padding: .25rem .5rem; border-radius: 8px; cursor: pointer;
     }
     .menu-close:hover { color: var(--text); background: color-mix(in oklab, var(--panel) 88%, white 12%); }
-
     .index-list { list-style: none; margin: 0; padding: 0; }
     .index-item {
       display: grid; grid-template-columns: 1fr auto; align-items: center;
@@ -278,7 +196,6 @@
     .index-item:hover { background: color-mix(in oklab, var(--panel) 90%, white 10%); }
     .index-item .badge { font-size: .75rem; color: var(--muted); border: 1px solid var(--border); padding: .15rem .4rem; border-radius: 999px; }
 
-    /* Theme switch (menu row 2) */
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
       gap: .75rem; padding: .5rem .25rem;
@@ -286,56 +203,44 @@
     .switch {
       position: relative; width: 52px; height: 28px;
       background: color-mix(in oklab, var(--panel) 85%, white 15%);
-      border: 1px solid var(--border); border-radius: 999px;
-      cursor: pointer;
+      border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
     }
     .switch .thumb {
       position: absolute; top: 2px; left: 2px;
       width: 24px; height: 24px; border-radius: 50%;
-      background: var(--text);
-      transition: left .2s ease;
+      background: var(--text); transition: left .2s ease;
     }
     .switch[data-checked="true"] .thumb { left: 26px; }
   </style>
 </head>
 <body>
 
-  <!-- ===================== HEADER ===================== -->
+  <!-- Header -->
   <header class="site-header" aria-label="Site header">
-    <!-- Menu button (opens full-screen menu) -->
     <button class="menu-btn" id="open-menu" title="Open Menu" aria-haspopup="true" aria-controls="menu-overlay">
-      <!-- Hamburger icon -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </button>
 
     <div class="logo company" aria-label="Company logo">
-      <!--
-        TODO: Replace with your company logo (local path or URL):
-        Example: <img src="images/company-logo.png" alt="SysArc Infomatix" />
-      -->
-      <img src="Company logo.png" alt="Company logo" />
+      <!-- TODO: Replace with your company logo path or URL -->
+      images/company-logo.png
     </div>
 
     <div class="site-title" aria-label="Company name">
-      <!--
-        TODO: Replace with your company/product name
-      -->
+      <!-- TODO: Replace with your company/product name -->
       Nimbus Cloud – User Manuals
     </div>
 
     <div class="logo partner" aria-label="Partner logo">
-      <!--
-        TODO: Replace with your partner logo path or URL:
-      -->
-      <img src="images/partner-logo.png" alt="Partner logo" />
+      <!-- TODO: Replace with your partner logo path or URL -->
+      images/partner-logo.png
     </div>
   </header>
 
-  <!-- ===================== MAIN LAYOUT ===================== -->
+  <!-- Layout -->
   <main class="layout" aria-label="Main content" id="layout">
-    <!-- MIDDLE: Markdown viewer -->
     <section class="panel content" aria-label="Markdown viewer">
       <div class="panel-header">
         <h2 id="current-manual-title">No manual loaded</h2>
@@ -347,13 +252,7 @@
             <h3>Welcome</h3>
             <p>Open <strong>Menu</strong> (top-left) → pick a manual in <em>Index</em>. This area will render the Markdown content.</p>
             <p style="color:var(--muted)">
-              <!--
-                TODO: IMPORTANT — Paste your GitHub Markdown links in the JS section below.
-                Find: const MANUALS_DATA = [ ... ]
-                Each item needs: id, name, url (RAW GitHub Markdown link)
-                Example RAW URL:
-                  https://raw.githubusercontent.com/your-org/your-repo/main/docs/getting-started.md
-              -->
+              <!-- TODO: Paste your GitHub RAW Markdown URLs in MANUALS_DATA below -->
               Tip: In GitHub, open your .md file → click <strong>Raw</strong> → copy that URL.
             </p>
           </div>
@@ -361,12 +260,10 @@
       </div>
     </section>
 
-    <!-- RIGHT: Table of contents (Collapsible) -->
     <aside class="panel toc" aria-label="Table of contents" id="panel-right">
       <div class="panel-header">
         <h2>Table of Contents</h2>
         <button class="collapse-btn" id="btn-collapse-right" aria-expanded="true" aria-controls="panel-right-body" title="Collapse TOC">
-          <!-- Chevron icon -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
             <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -374,14 +271,12 @@
         </button>
       </div>
       <div class="panel-body" id="panel-right-body">
-        <nav id="toc" aria-label="Headings in document">
-          <!-- Built after Markdown renders -->
-        </nav>
+        <nav id="toc" aria-label="Headings in document"></nav>
       </div>
     </aside>
   </main>
 
-  <!-- ===================== FULL-SCREEN MENU ===================== -->
+  <!-- Full-screen Menu -->
   <div class="menu-overlay" id="menu-overlay" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="menu-dialog">
       <div class="menu-header">
@@ -390,15 +285,10 @@
       </div>
 
       <div class="menu-body">
-        <!-- Row 1: Index (manual list) -->
         <section class="menu-section" aria-label="Index">
           <h3 class="menu-title">Index</h3>
-          <ul id="menu-index-list" class="index-list" aria-live="polite">
-            <!-- Items injected from MANUALS_DATA -->
-          </ul>
+          <ul id="menu-index-list" class="index-list" aria-live="polite"></ul>
         </section>
-
-        <!-- Row 2: Theme switch -->
         <section class="menu-section" aria-label="Appearance" style="border-bottom:none;">
           <h3 class="menu-title">Theme</h3>
           <div class="settings-row">
@@ -415,47 +305,19 @@
     </div>
   </div>
 
-  <!-- ===================== DEPENDENCIES ===================== -->
-  <!-- Marked.js: Markdown parser -->
+  <!-- ✅ Correct external script tags -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- DOMPurify: Sanitize HTML generated from Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 
-  <!-- ===================== PAGE LOGIC ===================== -->
+  <!-- Page logic -->
   <script>
-    // ===========================================================
-    // TODO: PASTE YOUR MANUALS HERE
-    // - id: a URL-safe unique key (used in selection)
-    // - name: what appears in the Index and header
-    // - url: the RAW GitHub URL to the .md file
-    // ===========================================================
     const MANUALS_DATA = [
-      {
-        id: "getting-started",
-        name: "PSB PMV Scheme",
-        // TODO: Replace with your GitHub RAW Markdown URL:
-        url: "https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md"
-      },
-      {
-        id: "admin-guide",
-        name: "Admin Guide",
-        // TODO: Replace with your GitHub RAW Markdown URL:
-        url: "https://raw.githubusercontent.com/Surya-Jaganathan/Website-UserManual-Category/refs/heads/main/getting-started.md"
-      },
-      {
-        id: "end-user",
-        name: "End-User Manual",
-        // TODO: Replace with your GitHub RAW Markdown URL:
-        url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/end-user-manual.md"
-      }
+      { id: "getting-started", name: "Getting Started", url: "https://raw.githubusercontent.com/Surya-Jaganathan/Website-UserManual-Category/refs/heads/main/getting-started.md" },
+      { id: "admin-guide", name: "Admin Guide", url: "https://surya-jaganathan.github.io/Website-UserManual-Category/#getting-started" },
+      { id: "end-user", name: "End-User Manual", url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/end-user-manual.md" }
     ];
-
-    // Keep the currently loaded manual for resolving relative assets (images)
     let CURRENT_MANUAL = null;
 
-    // ===========================================================
-    // Build the Index in the Menu screen
-    // ===========================================================
     function buildMenuIndex() {
       const listEl = document.getElementById("menu-index-list");
       listEl.innerHTML = "";
@@ -475,24 +337,16 @@
         li.appendChild(badge);
         li.addEventListener("click", () => {
           loadManualById(m.id);
-          closeMenu(); // auto close menu after selection
+          closeMenu();
         });
         listEl.appendChild(li);
       });
     }
 
-    // ===========================================================
-    // Utility: Slugify heading text for stable anchor IDs
-    // ===========================================================
     function slugify(text) {
-      return text.toLowerCase().trim()
-        .replace(/[^\w\s-]/g, "")
-        .replace(/\s+/g, "-");
+      return text.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
     }
 
-    // ===========================================================
-    // Render Markdown into the middle panel (+ fix images)
-    // ===========================================================
     async function renderMarkdown(mdText) {
       marked.use({ gfm: true, breaks: false });
       const html = marked.parse(mdText);
@@ -501,64 +355,48 @@
       const container = document.getElementById("markdown-view");
       container.innerHTML = safeHtml;
 
-      // Fix relative images to load from the same raw base as the Markdown file
       if (CURRENT_MANUAL?.url) {
         const imgs = container.querySelectorAll("img");
         imgs.forEach(img => {
           const src = img.getAttribute("src");
           if (!src) return;
           try {
-            // Resolve relative paths against the RAW md URL (e.g., raw.githubusercontent.com/.../docs/)
             const resolved = new URL(src, CURRENT_MANUAL.url).href;
             img.src = resolved;
-          } catch (e) {
-            // Ignore if URL can't be resolved
-          }
-          // Progressive loading hints
+          } catch { /* ignore */ }
           img.loading = "lazy";
           img.decoding = "async";
         });
       }
 
-      // After rendering, assign IDs to headings and build TOC
       assignHeadingIdsAndBuildTOC(container);
     }
 
-    // ===========================================================
-    // Assign IDs to headings, then build the TOC
-    // ===========================================================
     function assignHeadingIdsAndBuildTOC(container) {
       const headings = container.querySelectorAll("h1, h2, h3, h4, h5, h6");
       const used = new Set();
-
       headings.forEach(h => {
         let base = slugify(h.textContent);
         let id = base || h.tagName.toLowerCase();
         let i = 2;
-        while (used.has(id) || document.getElementById(id)) {
-          id = `${base}-${i++}`;
-        }
+        while (used.has(id) || document.getElementById(id)) id = `${base}-${i++}`;
         used.add(id);
         h.id = id;
       });
-
       buildTOC(headings);
     }
 
     function buildTOC(headings) {
       const toc = document.getElementById("toc");
       toc.innerHTML = "";
-
       headings.forEach(h => {
         const level = parseInt(h.tagName.substring(1), 10);
         const a = document.createElement("a");
-        a.href = `#${h.id}`;          // usable hash link
+        a.href = `#${h.id}`;
         a.textContent = h.textContent;
         a.className = `level-${level}`;
         toc.appendChild(a);
       });
-
-      // Smooth scroll within the content panel
       toc.querySelectorAll("a").forEach(a => {
         a.addEventListener("click", (ev) => {
           ev.preventDefault();
@@ -566,14 +404,11 @@
           const el = document.getElementById(targetId);
           if (!el) return;
           el.scrollIntoView({ behavior: "smooth", block: "start" });
-          history.replaceState(null, "", `#${targetId}`); // update hash for shareability
+          history.replaceState(null, "", `#${targetId}`);
         });
       });
     }
 
-    // ===========================================================
-    // Load a manual by its `id` from MANUALS_DATA
-    // ===========================================================
     async function loadManualById(id) {
       const manual = MANUALS_DATA.find(m => m.id === id);
       const statusEl = document.getElementById("load-status");
@@ -583,9 +418,7 @@
         titleEl.textContent = "Manual not found";
         statusEl.textContent = "";
         document.getElementById("markdown-view").innerHTML =
-          `<div class="placeholder">
-             <p style="color:var(--danger)">Error: Manual ID "${id}" not found in MANUALS_DATA.</p>
-           </div>`;
+          `<div class="placeholder"><p style="color:var(--danger)">Error: Manual ID "${id}" not found.</p></div>`;
         return;
       }
 
@@ -594,31 +427,25 @@
       statusEl.textContent = "Loading…";
 
       try {
-        // NOTE: Use RAW GitHub URLs (raw.githubusercontent.com) for CORS-friendly fetch
         const res = await fetch(manual.url, { cache: "no-store" });
-        if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const mdText = await res.text();
         await renderMarkdown(mdText);
         statusEl.textContent = "Loaded ✓";
-        // We do NOT overwrite hash with manual id anymore to keep heading hashes working.
       } catch (err) {
+        console.error(err);
         statusEl.textContent = "";
         document.getElementById("markdown-view").innerHTML =
           `<div class="placeholder">
              <p style="color:var(--danger)">Failed to load Markdown.</p>
-             <p><strong>Check the URL in MANUALS_DATA:</strong></p>
+             <p><strong>Check the URL:</strong></p>
              <pre>${manual.url}</pre>
-             <p style="color:var(--muted)">
-               If the repository is private, the browser cannot fetch it without auth.
-               Use a public repo or serve the files locally with proper CORS headers.
-             </p>
+             <p style="color:var(--muted)">If the repo is private, browsers can't fetch RAW without auth (CORS). Use a public repo or proxy.</p>
            </div>`;
       }
     }
 
-    // ===========================================================
-    // Collapsible TOC logic (fix: button always visible)
-    // ===========================================================
+    // TOC collapse (button remains visible)
     const panelRight = document.getElementById("panel-right");
     const btnRight = document.getElementById("btn-collapse-right");
     function toggleRightCollapse() {
@@ -628,5 +455,53 @@
     }
     btnRight.addEventListener("click", toggleRightCollapse);
 
-    // ===========================================================
+    // Full-screen Menu open/close
+    const overlay = document.getElementById("menu-overlay");
+    const openBtn = document.getElementById("open-menu");
+    const closeBtn = document.getElementById("close-menu");
+    function openMenu() { overlay.classList.add("open"); }
+    function closeMenu() { overlay.classList.remove("open"); }
+    openBtn.addEventListener("click", openMenu);
+    closeBtn.addEventListener("click", closeMenu);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) closeMenu(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+
+    // Theme switch
+    const themeSwitch = document.getElementById("theme-switch");
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      const checked = theme === "dark";
+      themeSwitch.dataset.checked = String(checked);
+      themeSwitch.setAttribute("aria-checked", String(checked));
+      localStorage.setItem("theme", theme);
+    }
+    function initTheme() {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") applyTheme(saved);
+      else applyTheme(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    }
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      applyTheme(current === "light" ? "dark" : "light");
+    }
+    themeSwitch.addEventListener("click", toggleTheme);
+    themeSwitch.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleTheme(); }
+    });
+
+    // Init
+    function init() {
+      try {
+        initTheme();
+        buildMenuIndex();
+        if (MANUALS_DATA[0]) loadManualById(MANUALS_DATA[0].id);
+      } catch (err) {
+        console.error("Init error:", err);
+      }
+    }
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
+``
 
