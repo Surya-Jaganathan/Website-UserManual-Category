@@ -9,15 +9,16 @@
   <!--
     ===========================================================
     ✨ PAGE OVERVIEW
-    - Header: Company logo (left), Company name (center), Partner logo (right)
-    - Left panel: Collapsible Index (manual categories)
+    - Header: Menu button (left), Company logo, Company name (italic), Partner logo (right)
     - Middle panel: Selected manual rendered from Markdown (GitHub RAW URLs)
-    - Right panel: Collapsible Table of Contents, auto-built from headings
-    - Floating right-side Settings menu: Light/Dark theme switch (persistent)
+    - Right panel: Collapsible Table of Contents (TOC), auto-built from headings
+    - Full-screen Menu: Two rows → (1) Index list of manuals, (2) Theme switch
     ===========================================================
     🔧 Where to paste your Markdown links:
       Scroll down to: const MANUALS_DATA = [ ... ]
       Fill each item's: id, name, url (RAW GitHub link to .md)
+      Example RAW URL:
+        https://raw.githubusercontent.com/your-org/your-repo/main/docs/getting-started.md
     ===========================================================
   -->
 
@@ -25,9 +26,7 @@
     /* =========================
        THEME SYSTEM (Light/Dark)
        ========================= */
-    :root {
-      color-scheme: light dark; /* allow UA to pick form controls correctly */
-    }
+    :root { color-scheme: light dark; }
     :root[data-theme="dark"] {
       --bg: #0f172a;
       --panel: #111827;
@@ -78,14 +77,29 @@
       top: 0;
       z-index: 100;
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns: auto auto 1fr auto; /* menu, company logo, title, partner logo */
       align-items: center;
-      gap: 1rem;
-      padding: .75rem 1rem;
+      gap: .75rem;
+      padding: .6rem .9rem;
       background: color-mix(in oklab, var(--panel) 70%, transparent);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border);
     }
+
+    /* Menu button (left of company logo) */
+    .menu-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+    .menu-btn:hover { background: color-mix(in oklab, var(--panel) 88%, white 12%); }
+    .menu-btn svg { width: 20px; height: 20px; }
+
     .site-header .logo {
       display: flex;
       align-items: center;
@@ -97,31 +111,27 @@
       object-fit: contain;
       filter: drop-shadow(0 1px 2px rgba(0,0,0,0.25));
     }
+
     .site-header .site-title {
       text-align: center;
+      font-style: italic;                /* ← requested italic */
       font-weight: 700;
       letter-spacing: 0.25px;
       font-size: clamp(1rem, 2.5vw, 1.25rem);
       color: var(--text);
     }
-    .site-header .logo.partner { justify-content: flex-end; }
 
     /* =========================
-       Layout grid
+       Layout grid (no left index)
        ========================= */
     .layout {
       display: grid;
-      grid-template-columns: 280px minmax(0, 1fr) 320px;
+      grid-template-columns: minmax(0, 1fr) 320px; /* content + TOC */
       gap: 1rem;
       padding: 1rem;
       max-width: 1700px;
       margin: 0 auto;
-      transition: grid-template-columns .25s ease;
     }
-    /* When panels are collapsed, adjust column widths */
-    .layout.collapse-left { grid-template-columns: 0px minmax(0, 1fr) 320px; }
-    .layout.collapse-right { grid-template-columns: 280px minmax(0, 1fr) 0px; }
-    .layout.collapse-both { grid-template-columns: 0px minmax(0, 1fr) 0px; }
 
     .panel {
       background: var(--panel);
@@ -140,7 +150,7 @@
     }
     .panel-header h2 { margin: 0; font-size: .95rem; font-weight: 600; color: var(--text); }
 
-    /* Collapse button */
+    /* Collapse button for TOC */
     .collapse-btn {
       display: inline-flex;
       align-items: center;
@@ -156,34 +166,9 @@
     .collapse-btn:hover { color: var(--text); background: color-mix(in oklab, var(--panel) 88%, white 12%); }
     .collapse-btn svg { width: 16px; height: 16px; }
 
-    /* Hide panel body when collapsed */
+    /* Hide only panel body when collapsed (button stays visible) */
     .panel.collapsed .panel-body { display: none; }
     .panel.collapsed { min-height: 48px; }
-
-    /* Left: Categories */
-    .categories { display: flex; flex-direction: column; }
-    .categories .panel-body { overflow-y: auto; max-height: calc(100vh - 170px); }
-    .category-list { list-style: none; margin: 0; padding: 0; }
-    .category-item {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: .5rem;
-      align-items: center;
-      padding: .6rem .9rem;
-      border-bottom: 1px dashed var(--border);
-      cursor: pointer;
-      color: var(--text);
-    }
-    .category-item:hover { background: color-mix(in oklab, var(--panel) 90%, white 10%); }
-    .category-item.active { background: color-mix(in oklab, var(--brand) 22%, var(--panel) 78%); border-left: 3px solid var(--brand); }
-    .category-item .name { font-weight: 600; }
-    .category-item .badge {
-      font-size: .75rem;
-      color: var(--muted);
-      border: 1px solid var(--border);
-      padding: .15rem .4rem;
-      border-radius: 999px;
-    }
 
     /* Middle: Markdown viewer */
     .content { position: relative; }
@@ -211,6 +196,7 @@
     }
     .markdown-body table { width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .95rem; }
     .markdown-body th, .markdown-body td { border: 1px solid var(--border); padding: .5rem .6rem; }
+    .markdown-body img { max-width: 100%; height: auto; border-radius: 8px; }
     .placeholder {
       border: 1px dashed var(--border);
       padding: 1rem; border-radius: 12px; background: color-mix(in oklab, var(--panel) 92%, white 8%);
@@ -230,128 +216,125 @@
     .toc .level-5, .toc .level-6 { margin-left: 2rem; font-size: .9rem; }
 
     /* Responsive adjustments */
-    @media (max-width: 1100px) {
-      .layout { grid-template-columns: 240px 1fr; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
       .toc { grid-column: 1 / -1; }
       .toc .panel-body { max-height: none; }
     }
-    @media (max-width: 750px) {
-      .site-header { grid-template-columns: 1fr; text-align: center; }
-      .site-header .logo.company, .site-header .logo.partner { justify-content: center; }
-      .layout { grid-template-columns: 1fr; }
-      .categories .panel-body, .content .panel-body { max-height: none; }
-      .toc nav a { padding: .25rem .4rem; }
-    }
 
     /* =========================
-       Floating Settings menu
+       Full-screen Menu (two rows)
        ========================= */
-    .settings-container {
+    .menu-overlay {
       position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 200;
-    }
-    .settings-fab {
-      border: 1px solid var(--border);
-      background: var(--panel);
-      color: var(--text);
-      width: 46px; height: 46px;
-      border-radius: 50%;
-      display: grid; place-items: center;
-      box-shadow: var(--shadow);
-      cursor: pointer;
-    }
-    .settings-fab:hover { background: color-mix(in oklab, var(--panel) 88%, white 12%); }
-    .settings-drawer {
-      position: absolute;
-      right: 0;
-      bottom: 56px;
-      width: 260px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      padding: .75rem;
+      inset: 0;
+      background: color-mix(in oklab, var(--bg) 70%, black 30%);
+      backdrop-filter: blur(4px);
       display: none;
+      z-index: 300;
     }
-    .settings-drawer.open { display: block; }
+    .menu-overlay.open { display: block; }
+
+    .menu-dialog {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(900px, 92vw);
+      max-height: 80vh;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .menu-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6rem .9rem; border-bottom: 1px solid var(--border);
+    }
+    .menu-body {
+      display: grid; grid-template-rows: 1fr auto; /* Row1: Index, Row2: Theme */
+      gap: 0; max-height: calc(80vh - 56px);
+    }
+    .menu-section {
+      padding: .9rem; overflow: auto;
+      border-bottom: 1px dashed var(--border);
+    }
+    .menu-title { margin: 0 0 .5rem; font-size: 1rem; font-weight: 600; }
+
+    .menu-close {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      padding: .25rem .5rem; border-radius: 8px; cursor: pointer;
+    }
+    .menu-close:hover { color: var(--text); background: color-mix(in oklab, var(--panel) 88%, white 12%); }
+
+    .index-list { list-style: none; margin: 0; padding: 0; }
+    .index-item {
+      display: grid; grid-template-columns: 1fr auto; align-items: center;
+      gap: .5rem; padding: .6rem .75rem; border: 1px solid var(--border);
+      border-radius: 10px; margin-bottom: .5rem; cursor: pointer;
+    }
+    .index-item:hover { background: color-mix(in oklab, var(--panel) 90%, white 10%); }
+    .index-item .badge { font-size: .75rem; color: var(--muted); border: 1px solid var(--border); padding: .15rem .4rem; border-radius: 999px; }
+
+    /* Theme switch (menu row 2) */
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
-      gap: .75rem; padding: .4rem .25rem;
+      gap: .75rem; padding: .5rem .25rem;
     }
     .switch {
-      position: relative; width: 48px; height: 26px;
+      position: relative; width: 52px; height: 28px;
       background: color-mix(in oklab, var(--panel) 85%, white 15%);
       border: 1px solid var(--border); border-radius: 999px;
       cursor: pointer;
     }
     .switch .thumb {
       position: absolute; top: 2px; left: 2px;
-      width: 22px; height: 22px; border-radius: 50%;
+      width: 24px; height: 24px; border-radius: 50%;
       background: var(--text);
       transition: left .2s ease;
     }
-    .switch[data-checked="true"] .thumb { left: 24px; }
-
-    .settings-divider {
-      border-top: 1px dashed var(--border);
-      margin: .5rem 0;
-    }
-    .settings-title {
-      font-size: .9rem; font-weight: 600;
-    }
-
+    .switch[data-checked="true"] .thumb { left: 26px; }
   </style>
 </head>
 <body>
 
   <!-- ===================== HEADER ===================== -->
   <header class="site-header" aria-label="Site header">
+    <!-- Menu button (opens full-screen menu) -->
+    <button class="menu-btn" id="open-menu" title="Open Menu" aria-haspopup="true" aria-controls="menu-overlay">
+      <!-- Hamburger icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+        <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
     <div class="logo company" aria-label="Company logo">
       <!--
         TODO: Replace with your company logo (local path or URL):
-        Example: <img src="images/company-logo.png" alt="Company logo">
+        Example: <img src="images/company-logo.png" alt="SysArc Infomatix" />
       -->
-      <img src="Company logo.png" alt="SysArc Infomatix">
+      <img src="Company logo.png" alt="Company logo" />
     </div>
 
     <div class="site-title" aria-label="Company name">
       <!--
         TODO: Replace with your company/product name
       -->
-      lendPerfect – User Manuals
+      Nimbus Cloud – User Manuals
     </div>
 
     <div class="logo partner" aria-label="Partner logo">
       <!--
-        TODO: Replace with your partner logo path or URL.
+        TODO: Replace with your partner logo path or URL:
       -->
-      <img src="images/partner-logo.png" alt="Partner logo">
+      <img src="images/partner-logo.png" alt="Partner logo" />
     </div>
   </header>
 
   <!-- ===================== MAIN LAYOUT ===================== -->
   <main class="layout" aria-label="Main content" id="layout">
-    <!-- LEFT: Categories (Collapsible) -->
-    <aside class="panel categories" aria-label="User manual categories" id="panel-left">
-      <div class="panel-header">
-        <h2>Index</h2>
-        <button class="collapse-btn" id="btn-collapse-left" aria-expanded="true" aria-controls="panel-left-body" title="Collapse Index">
-          <!-- Chevron icon -->
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-            <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          Collapse
-        </button>
-      </div>
-      <div class="panel-body" id="panel-left-body">
-        <ul id="manual-list" class="category-list" aria-live="polite">
-          <!-- Items injected from MANUALS_DATA -->
-        </ul>
-      </div>
-    </aside>
-
     <!-- MIDDLE: Markdown viewer -->
     <section class="panel content" aria-label="Markdown viewer">
       <div class="panel-header">
@@ -362,7 +345,7 @@
         <article id="markdown-view" class="markdown-body" aria-live="polite">
           <div class="placeholder">
             <h3>Welcome</h3>
-            <p>Select a manual from the Index. This area will render the Markdown content.</p>
+            <p>Open <strong>Menu</strong> (top-left) → pick a manual in <em>Index</em>. This area will render the Markdown content.</p>
             <p style="color:var(--muted)">
               <!--
                 TODO: IMPORTANT — Paste your GitHub Markdown links in the JS section below.
@@ -398,28 +381,36 @@
     </aside>
   </main>
 
-  <!-- ===================== FLOATING SETTINGS MENU ===================== -->
-  <div class="settings-container" aria-label="Settings">
-    <button class="settings-fab" id="settings-fab" aria-haspopup="true" aria-controls="settings-drawer" title="Open Settings">
-      <!-- Gear icon -->
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" aria-hidden="true">
-        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke-width="2"/>
-        <path d="M19.4 15a7.8 7.8 0 0 0 .1-6l2-3.4-3.1-3.1-3.4 2a7.8 7.8 0 0 0-6 .1l-3.4-2L1.1 5.6l2 3.4a7.8 7.8 0 0 0-.1 6l-2 3.4 3.1 3.1 3.4-2a7.8 7.8 0 0 0 6-.1l3.4 2 3.1-3.1-2-3.4Z" stroke-width="1.5" opacity=".6"/>
-      </svg>
-    </button>
-
-    <div class="settings-drawer" id="settings-drawer" role="dialog" aria-modal="false">
-      <div class="settings-title">Appearance</div>
-      <div class="settings-row">
-        <span>Theme</span>
-        <!-- Accessible custom switch; syncs to localStorage -->
-        <div class="switch" id="theme-switch" role="switch" aria-checked="false" tabindex="0" data-checked="false" title="Toggle Light/Dark">
-          <div class="thumb" aria-hidden="true"></div>
-        </div>
+  <!-- ===================== FULL-SCREEN MENU ===================== -->
+  <div class="menu-overlay" id="menu-overlay" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="menu-dialog">
+      <div class="menu-header">
+        <strong>Menu</strong>
+        <button class="menu-close" id="close-menu" title="Close">Close</button>
       </div>
-      <div class="settings-divider"></div>
-      <div class="settings-row" style="font-size:.85rem;color:var(--muted);">
-        <span>Uses <code>localStorage</code> to remember your choice</span>
+
+      <div class="menu-body">
+        <!-- Row 1: Index (manual list) -->
+        <section class="menu-section" aria-label="Index">
+          <h3 class="menu-title">Index</h3>
+          <ul id="menu-index-list" class="index-list" aria-live="polite">
+            <!-- Items injected from MANUALS_DATA -->
+          </ul>
+        </section>
+
+        <!-- Row 2: Theme switch -->
+        <section class="menu-section" aria-label="Appearance" style="border-bottom:none;">
+          <h3 class="menu-title">Theme</h3>
+          <div class="settings-row">
+            <span>Light / Dark</span>
+            <div class="switch" id="theme-switch" role="switch" aria-checked="false" tabindex="0" data-checked="false" title="Toggle Light/Dark">
+              <div class="thumb" aria-hidden="true"></div>
+            </div>
+          </div>
+          <p style="color:var(--muted); font-size:.85rem; margin:.25rem 0 0;">
+            Your choice is saved in <code>localStorage</code>.
+          </p>
+        </section>
       </div>
     </div>
   </div>
@@ -434,14 +425,14 @@
   <script>
     // ===========================================================
     // TODO: PASTE YOUR MANUALS HERE
-    // - id: a URL-safe unique key (used in #hash and selection)
-    // - name: what appears in the Index list and header
+    // - id: a URL-safe unique key (used in selection)
+    // - name: what appears in the Index and header
     // - url: the RAW GitHub URL to the .md file
     // ===========================================================
     const MANUALS_DATA = [
       {
         id: "getting-started",
-        name: "Getting Started",
+        name: "PSB PMV Scheme",
         // TODO: Replace with your GitHub RAW Markdown URL:
         url: "https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md"
       },
@@ -449,7 +440,7 @@
         id: "admin-guide",
         name: "Admin Guide",
         // TODO: Replace with your GitHub RAW Markdown URL:
-        url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/admin-guide.md"
+        url: "https://raw.githubusercontent.com/Surya-Jaganathan/Website-UserManual-Category/refs/heads/main/getting-started.md"
       },
       {
         id: "end-user",
@@ -458,6 +449,37 @@
         url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/end-user-manual.md"
       }
     ];
+
+    // Keep the currently loaded manual for resolving relative assets (images)
+    let CURRENT_MANUAL = null;
+
+    // ===========================================================
+    // Build the Index in the Menu screen
+    // ===========================================================
+    function buildMenuIndex() {
+      const listEl = document.getElementById("menu-index-list");
+      listEl.innerHTML = "";
+      MANUALS_DATA.forEach(m => {
+        const li = document.createElement("li");
+        li.className = "index-item";
+        li.setAttribute("data-id", m.id);
+
+        const name = document.createElement("span");
+        name.textContent = m.name;
+
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = "Markdown";
+
+        li.appendChild(name);
+        li.appendChild(badge);
+        li.addEventListener("click", () => {
+          loadManualById(m.id);
+          closeMenu(); // auto close menu after selection
+        });
+        listEl.appendChild(li);
+      });
+    }
 
     // ===========================================================
     // Utility: Slugify heading text for stable anchor IDs
@@ -469,33 +491,7 @@
     }
 
     // ===========================================================
-    // Build the Index (left list)
-    // ===========================================================
-    function buildManualList() {
-      const listEl = document.getElementById("manual-list");
-      listEl.innerHTML = "";
-      MANUALS_DATA.forEach(m => {
-        const li = document.createElement("li");
-        li.className = "category-item";
-        li.setAttribute("data-id", m.id);
-
-        const name = document.createElement("span");
-        name.className = "name";
-        name.textContent = m.name;
-
-        const badge = document.createElement("span");
-        badge.className = "badge";
-        badge.textContent = "Markdown";
-
-        li.appendChild(name);
-        li.appendChild(badge);
-        li.addEventListener("click", () => loadManualById(m.id));
-        listEl.appendChild(li);
-      });
-    }
-
-    // ===========================================================
-    // Render Markdown into the middle panel
+    // Render Markdown into the middle panel (+ fix images)
     // ===========================================================
     async function renderMarkdown(mdText) {
       marked.use({ gfm: true, breaks: false });
@@ -504,6 +500,25 @@
 
       const container = document.getElementById("markdown-view");
       container.innerHTML = safeHtml;
+
+      // Fix relative images to load from the same raw base as the Markdown file
+      if (CURRENT_MANUAL?.url) {
+        const imgs = container.querySelectorAll("img");
+        imgs.forEach(img => {
+          const src = img.getAttribute("src");
+          if (!src) return;
+          try {
+            // Resolve relative paths against the RAW md URL (e.g., raw.githubusercontent.com/.../docs/)
+            const resolved = new URL(src, CURRENT_MANUAL.url).href;
+            img.src = resolved;
+          } catch (e) {
+            // Ignore if URL can't be resolved
+          }
+          // Progressive loading hints
+          img.loading = "lazy";
+          img.decoding = "async";
+        });
+      }
 
       // After rendering, assign IDs to headings and build TOC
       assignHeadingIdsAndBuildTOC(container);
@@ -537,24 +552,21 @@
       headings.forEach(h => {
         const level = parseInt(h.tagName.substring(1), 10);
         const a = document.createElement("a");
-        a.href = `#${h.id}`;
+        a.href = `#${h.id}`;          // usable hash link
         a.textContent = h.textContent;
         a.className = `level-${level}`;
         toc.appendChild(a);
       });
 
-      // Ensure smooth scroll with sticky header offset
-      // (scroll-margin-top on headings already helps, but we add guard)
+      // Smooth scroll within the content panel
       toc.querySelectorAll("a").forEach(a => {
         a.addEventListener("click", (ev) => {
-          // Allow default hash update for shareability
           ev.preventDefault();
           const targetId = a.getAttribute("href").slice(1);
           const el = document.getElementById(targetId);
           if (!el) return;
-          // Smooth scroll, then update hash
           el.scrollIntoView({ behavior: "smooth", block: "start" });
-          history.replaceState(null, "", `#${targetId}`);
+          history.replaceState(null, "", `#${targetId}`); // update hash for shareability
         });
       });
     }
@@ -567,11 +579,6 @@
       const statusEl = document.getElementById("load-status");
       const titleEl = document.getElementById("current-manual-title");
 
-      // Update selection highlight
-      document.querySelectorAll(".category-item").forEach(el => {
-        el.classList.toggle("active", el.getAttribute("data-id") === id);
-      });
-
       if (!manual) {
         titleEl.textContent = "Manual not found";
         statusEl.textContent = "";
@@ -582,20 +589,18 @@
         return;
       }
 
+      CURRENT_MANUAL = manual;
       titleEl.textContent = manual.name;
       statusEl.textContent = "Loading…";
 
       try {
         // NOTE: Use RAW GitHub URLs (raw.githubusercontent.com) for CORS-friendly fetch
         const res = await fetch(manual.url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
         const mdText = await res.text();
         await renderMarkdown(mdText);
         statusEl.textContent = "Loaded ✓";
-        // Update only the manual hash (not headings)
-        location.hash = manual.id;
-        // Ensure TOC visible if previously collapsed on mobile
-        // (optional behavior, leave as-is if you don't want auto expand)
+        // We do NOT overwrite hash with manual id anymore to keep heading hashes working.
       } catch (err) {
         statusEl.textContent = "";
         document.getElementById("markdown-view").innerHTML =
@@ -603,138 +608,25 @@
              <p style="color:var(--danger)">Failed to load Markdown.</p>
              <p><strong>Check the URL in MANUALS_DATA:</strong></p>
              <pre>${manual.url}</pre>
-             <p style="color:var(--muted)">If the repository is private, the browser cannot fetch it without auth. Use a public repo or serve the files locally.</p>
+             <p style="color:var(--muted)">
+               If the repository is private, the browser cannot fetch it without auth.
+               Use a public repo or serve the files locally with proper CORS headers.
+             </p>
            </div>`;
       }
     }
 
     // ===========================================================
-    // Collapsible panels logic (Left Index & Right TOC)
+    // Collapsible TOC logic (fix: button always visible)
     // ===========================================================
-    const layoutEl = document.getElementById("layout");
-    const panelLeft = document.getElementById("panel-left");
     const panelRight = document.getElementById("panel-right");
-    const btnLeft = document.getElementById("btn-collapse-left");
     const btnRight = document.getElementById("btn-collapse-right");
-
-    function syncLayoutClasses() {
-      const leftCollapsed = panelLeft.classList.contains("collapsed");
-      const rightCollapsed = panelRight.classList.contains("collapsed");
-
-      layoutEl.classList.remove("collapse-left", "collapse-right", "collapse-both");
-      if (leftCollapsed && rightCollapsed) layoutEl.classList.add("collapse-both");
-      else if (leftCollapsed) layoutEl.classList.add("collapse-left");
-      else if (rightCollapsed) layoutEl.classList.add("collapse-right");
-    }
-
-    function toggleLeftCollapse() {
-      const isCollapsed = panelLeft.classList.toggle("collapsed");
-      btnLeft.setAttribute("aria-expanded", String(!isCollapsed));
-      btnLeft.title = isCollapsed ? "Expand Index" : "Collapse Index";
-      syncLayoutClasses();
-    }
-
     function toggleRightCollapse() {
       const isCollapsed = panelRight.classList.toggle("collapsed");
       btnRight.setAttribute("aria-expanded", String(!isCollapsed));
       btnRight.title = isCollapsed ? "Expand TOC" : "Collapse TOC";
-      syncLayoutClasses();
     }
-
-    btnLeft.addEventListener("click", toggleLeftCollapse);
     btnRight.addEventListener("click", toggleRightCollapse);
 
-    // Collapse both by default on small screens for more content space
-    function responsiveDefaultCollapse() {
-      if (window.matchMedia("(max-width: 750px)").matches) {
-        if (!panelLeft.classList.contains("collapsed")) toggleLeftCollapse();
-        if (!panelRight.classList.contains("collapsed")) toggleRightCollapse();
-      }
-    }
-    window.addEventListener("resize", responsiveDefaultCollapse);
-
     // ===========================================================
-    // Floating Settings menu: Theme switch (Light/Dark + persist)
-    // ===========================================================
-    const fab = document.getElementById("settings-fab");
-    const drawer = document.getElementById("settings-drawer");
-    const themeSwitch = document.getElementById("theme-switch");
-
-    function openDrawer(open) {
-      drawer.classList.toggle("open", open);
-    }
-    fab.addEventListener("click", () => {
-      const isOpen = drawer.classList.contains("open");
-      openDrawer(!isOpen);
-    });
-
-    // Theme helpers
-    function applyTheme(theme) {
-      // theme = "light" | "dark"
-      document.documentElement.setAttribute("data-theme", theme);
-      const checked = theme === "dark";
-      themeSwitch.dataset.checked = String(checked);
-      themeSwitch.setAttribute("aria-checked", String(checked));
-      localStorage.setItem("theme", theme);
-    }
-
-    function initTheme() {
-      const saved = localStorage.getItem("theme");
-      if (saved === "light" || saved === "dark") {
-        applyTheme(saved);
-      } else {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        applyTheme(prefersDark ? "dark" : "light");
-      }
-    }
-
-    // Toggle by click/keyboard
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute("data-theme") || "light";
-      applyTheme(current === "light" ? "dark" : "light");
-    }
-    themeSwitch.addEventListener("click", toggleTheme);
-    themeSwitch.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        toggleTheme();
-      }
-    });
-
-    // Close settings when clicking outside
-    document.addEventListener("click", (e) => {
-      if (!drawer.contains(e.target) && !fab.contains(e.target)) {
-        openDrawer(false);
-      }
-    });
-
-    // ===========================================================
-    // Init: build list, theme, responsive defaults, hash handling
-    // ===========================================================
-    function init() {
-      initTheme();
-      buildManualList();
-      responsiveDefaultCollapse();
-
-      // If URL has a manual ID (#admin-guide), load it; else first
-      const initialId = location.hash?.replace("#", "");
-      if (initialId && MANUALS_DATA.some(m => m.id === initialId)) {
-        loadManualById(initialId);
-      } else if (MANUALS_DATA[0]) {
-        loadManualById(MANUALS_DATA[0].id);
-      }
-    }
-
-    window.addEventListener("hashchange", () => {
-      const id = location.hash.replace("#", "");
-      // If the hash matches a manual, load it; if it's a heading id, let TOC handler manage it
-      if (MANUALS_DATA.some(m => m.id === id)) {
-        loadManualById(id);
-      }
-    });
-
-    document.addEventListener("DOMContentLoaded", init);
-  </script>
-</body>
-</
 
