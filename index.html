@@ -1,340 +1,480 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Documentation Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Manuals Portal</title>
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="assets/company-favicon.png" />
+  <!--
+    ===========================================================
+    ✨ HOW THIS PAGE WORKS
+    - Header: Company logo (left), Company name (center), Partner logo (right)
+    - Left column: Categories (manual list)
+    - Middle column: Selected Markdown (loaded from GitHub raw URLs)
+    - Right column: Table of Contents (built from headings in the Markdown)
+    - To add your manuals: Scroll down to the JS section and update MANUALS_DATA.
+    ===========================================================
+  -->
 
-  <!-- Fonts (system UI stack) -->
   <style>
+    /* ============ THEME VARIABLES (Edit freely) ============ */
     :root {
-      --bg: #ffffff;
-      --text: #1b1b1b;
-      --muted: #6b7280;
-      --brand: #2563eb;
-      --brand-2: #0ea5e9;
-      --border: #e5e7eb;
-      --sidebar-bg: #f8fafc;
-      --toc-bg: #fafafa;
-      --focus: #f59e0b;
-
-      --header-h: 64px;
-      --sidebar-w: 280px;
-      --toc-w: 320px;
-      --content-max: 1100px;
-      --radius: 10px;
+      --bg: #0f172a;            /* page background */
+      --panel: #111827;         /* panel background */
+      --text: #e5e7eb;          /* primary text */
+      --muted: #9ca3af;         /* secondary text */
+      --brand: #4f46e5;         /* brand accent */
+      --border: #1f2937;        /* divider lines */
+      --link: #60a5fa;          /* links */
+      --success: #10b981;
+      --danger: #ef4444;
     }
 
+    /* Reset + Base */
     * { box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      background: var(--bg);
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% 10%, #0b1324, var(--bg));
       color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-      line-height: 1.6;
     }
-    a { color: var(--brand); text-decoration: none; }
+    a { color: var(--link); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    img { max-width: 100%; height: auto; }
 
-    /* App layout: sticky header + 3 columns */
-    .app {
-      display: grid;
-      grid-template-rows: var(--header-h) 1fr;
-      min-height: 100vh;
-    }
-    header[role="banner"] {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr; /* left | center | right */
-      align-items: center;
-      gap: 12px;
-      padding: 8px 16px;
-      border-bottom: 1px solid var(--border);
-      background: #fff;
+    /* ============ HEADER ============ */
+    .site-header {
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1rem;
+      padding: .75rem 1rem;
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
     }
-    .header-left, .header-center, .header-right {
+    .site-header .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      height: 40px;
     }
-    .header-left { justify-content: flex-start; }
-    .header-center { justify-content: center; }
-    .header-right { justify-content: flex-end; }
-
-    .company-name {
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      font-size: 1.15rem;
-      color: var(--brand);
+    .site-header .logo img {
+      max-height: 100%;
+      max-width: 180px;
+      object-fit: contain;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+    }
+    .site-header .site-title {
       text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.25px;
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text);
+    }
+    .site-header .logo.partner {
+      justify-content: flex-end;
     }
 
-    main[role="main"] {
+    /* ============ LAYOUT ============ */
+    .layout {
       display: grid;
-      grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--toc-w);
-      gap: 16px;
-      padding: 16px;
+      grid-template-columns: 280px minmax(0, 1fr) 320px;
+      gap: 1rem;
+      padding: 1rem;
+      max-width: 1700px;
+      margin: 0 auto;
     }
 
-    /* Panels */
     .panel {
+      background: linear-gradient(180deg, rgba(31,41,55,.6), rgba(17,24,39,.8));
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #fff;
+      border-radius: 14px;
       overflow: hidden;
     }
     .panel-header {
-      padding: 10px 12px;
-      font-weight: 600;
+      padding: .75rem 1rem;
       border-bottom: 1px solid var(--border);
-      background: #fcfcfd;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255,255,255,0.02);
+    }
+    .panel-header h2 {
+      margin: 0; font-size: .95rem; font-weight: 600; color: var(--text);
     }
 
-    /* Sidebar: manuals list */
-    .sidebar { background: var(--sidebar-bg); }
-    .manual-list { list-style: none; padding: 0; margin: 0; }
-    .manual-item {
-      padding: 10px 12px;
+    /* Left: Categories */
+    .categories { display: flex; flex-direction: column; }
+    .categories .panel-body { overflow-y: auto; max-height: calc(100vh - 170px); }
+    .category-list { list-style: none; margin: 0; padding: 0; }
+    .category-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .5rem;
+      align-items: center;
+      padding: .6rem .9rem;
       border-bottom: 1px dashed var(--border);
-    }
-    .manual-item:last-child { border-bottom: none; }
-    .manual-item button {
-      width: 100%;
-      text-align: left;
-      padding: 8px 10px;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      background: transparent;
       cursor: pointer;
       color: var(--text);
     }
-    .manual-item button:hover,
-    .manual-item button:focus {
-      outline: none;
-      border-color: var(--brand-2);
-      background: #eef6ff;
-    }
-    .manual-item.active button {
-      background: #e8f1ff;
-      border-color: var(--brand);
-      font-weight: 600;
-    }
-
-    /* Content */
-    .content {
-      max-width: var(--content-max);
-      margin: 0 auto;
-      padding: 16px 20px;
-    }
-    .content h1, .content h2, .content h3, .content h4 {
-      scroll-margin-top: calc(var(--header-h) + 12px);
-    }
-    .doc-meta { color: var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
-    .content pre, .content code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-    }
-    .content pre {
-      background: #f7f7f9;
+    .category-item:hover { background: rgba(255,255,255,0.04); }
+    .category-item.active { background: rgba(99,102,241,0.14); border-left: 3px solid var(--brand); }
+    .category-item .name { font-weight: 600; }
+    .category-item .badge {
+      font-size: .75rem;
+      color: var(--muted);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      overflow: auto;
-    }
-    .callout {
-      border-left: 4px solid var(--brand);
-      background: #f0f7ff;
-      padding: 10px 12px;
-      border-radius: 8px;
-      margin: 12px 0;
+      padding: .15rem .4rem;
+      border-radius: 999px;
     }
 
-    /* TOC (right) */
-    .toc {
-      background: var(--toc-bg);
-      position: sticky;
-      top: calc(var(--header-h) + 16px);
-      align-self: start;
-      max-height: calc(100vh - var(--header-h) - 32px);
+    /* Middle: Markdown viewer */
+    .content { position: relative; }
+    .content .panel-body {
+      overflow-y: auto; max-height: calc(100vh - 170px);
+      padding: 1rem 1.25rem;
+    }
+    .markdown-body {
+      line-height: 1.6;
+    }
+    .markdown-body h1, .markdown-body h2, .markdown-body h3,
+    .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+      margin: 1.2rem 0 .6rem;
+      scroll-margin-top: 80px; /* anchor scrolling offset for sticky header */
+    }
+    .markdown-body h1 { font-size: 1.9rem; }
+    .markdown-body h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: .25rem; }
+    .markdown-body h3 { font-size: 1.2rem; color: #cbd5e1; }
+    .markdown-body p { margin: .7rem 0; color: var(--text); }
+    .markdown-body code { background: rgba(255,255,255,0.06); padding: 0 .25rem; border-radius: 4px; }
+    .markdown-body pre {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .9rem;
       overflow: auto;
     }
-    .toc-nav { padding: 10px 12px; }
-    .toc-nav ul { list-style: none; padding-left: 0; }
-    .toc-nav li { margin: 6px 0; }
-    .toc-link {
-      display: inline-block;
-      padding: 6px 8px;
-      border-radius: 6px;
-      color: var(--text);
+    .markdown-body table {
+      width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .95rem;
     }
-    .toc-link:hover { background: #eef2ff; }
-    .toc-link.level-2 { margin-left: 0; font-weight: 600; }
-    .toc-link.level-3 { margin-left: 10px; color: var(--muted); }
-    .toc-link.level-4 { margin-left: 20px; color: var(--muted); }
+    .markdown-body th, .markdown-body td {
+      border: 1px solid var(--border); padding: .5rem .6rem;
+    }
+    .placeholder {
+      border: 1px dashed var(--border);
+      padding: 1rem; border-radius: 12px; background: rgba(255,255,255,0.03);
+    }
+
+    /* Right: TOC */
+    .toc .panel-body { overflow-y: auto; max-height: calc(100vh - 170px); }
+    .toc nav { padding: .25rem .5rem; }
+    .toc a {
+      display: block; padding: .35rem .5rem; border-radius: 8px; color: var(--muted);
+    }
+    .toc a:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .toc .level-1 { margin-left: 0; font-weight: 700; color: var(--text); }
+    .toc .level-2 { margin-left: .5rem; }
+    .toc .level-3 { margin-left: 1rem; }
+    .toc .level-4 { margin-left: 1.5rem; font-size: .95rem; }
+    .toc .level-5, .toc .level-6 { margin-left: 2rem; font-size: .9rem; }
 
     /* Responsive */
-    @media (max-width: 1200px) {
-      main[role="main"] { grid-template-columns: var(--sidebar-w) 1fr; }
-      .toc { display: none; } /* Hide TOC on smaller screens */
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 240px 1fr; }
+      .toc { grid-column: 1 / -1; }
+      .toc .panel-body { max-height: none; }
     }
-    @media (max-width: 768px) {
-      header[role="banner"] { grid-template-columns: 1fr auto; }
-      .header-center { display: none; } /* Hide company name on small screens */
-      main[role="main"] { grid-template-columns: 1fr; }
-      .sidebar { order: 1; }
-      .content { order: 2; }
-    }
-
-    /* Accessibility focus */
-    :focus-visible {
-      outline: 3px solid var(--focus);
-      outline-offset: 2px;
-      border-radius: 6px;
+    @media (max-width: 750px) {
+      .site-header { grid-template-columns: 1fr; text-align: center; }
+      .site-header .logo.company, .site-header .logo.partner { justify-content: center; }
+      .layout { grid-template-columns: 1fr; }
+      .categories .panel-body, .content .panel-body { max-height: none; }
+      .toc nav a { padding: .25rem .4rem; }
     }
   </style>
-
-  <!-- Markdown parser (Marked) + sanitizer (DOMPurify) from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js" defer></script>
 </head>
-
 <body>
-  <div class="app">
-    <!-- Header -->
-    <header role="banner" aria-label="Site header">
-      <div class="header-left">
-        <a href="#" aria-label="Home">
-          <img src="Company logo.png" alt="Company logo" style="height:40px;" />
-        </a>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header" aria-label="Site header">
+    <div class="logo company" aria-label="Company logo">
+      <!--
+        TODO: Replace the src with your company logo path or URL.
+        If you host the PNG/JPG locally, place it in /images and update the path.
+      -->
+      <img src="images/company-logo.png" alt="Company logo" />
+    </div>
+
+    <div class="site-title" aria-label="Company name">
+      <!--
+        TODO: Replace with your company/product name.
+        If you wanted the company logo on the RIGHT instead, swap the 'company' and 'partner' divs.
+      -->
+      Nimbus Cloud – User Manuals
+    </div>
+
+    <div class="logo partner" aria-label="Partner logo">
+      <!--
+        TODO: Replace the src with your partner logo path or URL.
+      -->
+      <img src="images/partner-logo.png" alt="Partner logo" />
+    </div>
+  </header>
+
+  <!-- ===================== MAIN LAYOUT ===================== -->
+  <main class="layout" aria-label="Main content">
+    <!-- LEFT: Categories -->
+    <aside class="panel categories" aria-label="User manual categories">
+      <div class="panel-header">
+        <h2>User Manuals</h2>
+        <span class="muted" style="color:var(--muted); font-size:.85rem;">Select a manual</span>
       </div>
-
-      <div class="header-center">
-        <div class="company-name" aria-label="Company name">Your Company Name</div>
+      <div class="panel-body">
+        <ul id="manual-list" class="category-list" aria-live="polite">
+          <!-- Items are injected by JavaScript from MANUALS_DATA -->
+        </ul>
       </div>
+    </aside>
 
-      <div class="header-right">
-        <img src="assets/partner-logo.png" alt="Partner logo" style="height:40px;" />
+    <!-- MIDDLE: Markdown viewer -->
+    <section class="panel content" aria-label="Markdown viewer">
+      <div class="panel-header">
+        <h2 id="current-manual-title">No manual loaded</h2>
+        <span id="load-status" style="color:var(--muted); font-size:.85rem;"></span>
       </div>
-    </header>
-
-    <!-- Main -->
-    <main role="main" aria-label="Documentation layout">
-      <!-- Left: Manuals list -->
-      <aside class="panel sidebar" aria-label="Manuals list" id="manualsPanel">
-        <div class="panel-header">User Manuals</div>
-        <nav aria-label="Manual navigation">
-          <ul class="manual-list" id="manualList"></ul>
-        </nav>
-      </aside>
-
-      <!-- Middle: Selected Manual Content -->
-      <section class="panel content" aria-label="Manual content">
-        <div class="panel-header" id="docTitle">Select a manual</div>
-        <article id="docContent" tabindex="0" aria-live="polite" aria-busy="false">
-          <p class="doc-meta">Choose a manual from the left. The table of contents will appear on the right.</p>
+      <div class="panel-body">
+        <article id="markdown-view" class="markdown-body" aria-live="polite">
+          <div class="placeholder">
+            <h3>Welcome</h3>
+            <p>
+              Select a manual from the left panel. This area will render the Markdown content.
+            </p>
+            <p style="color:var(--muted)">
+              <!--
+                TODO: IMPORTANT — Paste your GitHub Markdown links in the JS section (scroll down).
+                Look for: const MANUALS_DATA = [...]
+                Each item needs:
+                  - id    (string, used in the URL hash and DOM)
+                  - name  (display name in the list/header)
+                  - url   (Raw GitHub URL to the .md file)
+                Example of a raw URL:
+                  https://raw.githubusercontent.com/your-org/your-repo/main/docs/getting-started.md
+              -->
+              Tip: In GitHub, open your .md file → click <strong>Raw</strong> → copy the URL.
+            </p>
+          </div>
         </article>
-      </section>
+      </div>
+    </section>
 
-      <!-- Right: TOC -->
-      <aside class="panel toc" aria-label="Table of contents">
-        <div class="panel-header">Contents</div>
-        <nav class="toc-nav" id="tocNav" aria-label="Document table of contents"></nav>
-      </aside>
-    </main>
-  </div>
+    <!-- RIGHT: Table of contents -->
+    <aside class="panel toc" aria-label="Table of contents">
+      <div class="panel-header">
+        <h2>Table of Contents</h2>
+        <span class="muted" style="color:var(--muted); font-size:.85rem;">Auto-generated</span>
+      </div>
+      <div class="panel-body">
+        <nav id="toc" aria-label="Headings in document">
+          <!-- Built by JavaScript after Markdown renders -->
+        </nav>
+      </div>
+    </aside>
+  </main>
 
+  <!-- ===================== DEPENDENCIES ===================== -->
+  <!-- Marked.js: Markdown parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" integrity="" crossorigin="anonymous"></script>
+  <!-- DOMPurify: Sanitize HTML generated from Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js" integrity="" crossorigin="anonymous"></script>
+
+  <!-- ===================== PAGE LOGIC (Edit MANUALS_DATA) ===================== -->
   <script>
-    // Wait for Marked + DOMPurify
-    window.addEventListener('load', () => {
-      // -------------------------------
-      // Configure Marked renderer
-      // -------------------------------
-      marked.setOptions({
-        breaks: true,           // Treat single line breaks as <br>
-        gfm: true,              // GitHub Flavored Markdown
-        headerIds: true,        // Generate IDs for headings
-        mangle: false           // Keep heading text as-is in IDs
+    // ===========================================================
+    // TODO: PASTE YOUR MANUALS HERE
+    // - id: a URL-safe unique key (used in #hash and selection)
+    // - name: what appears in the left list and header
+    // - url: the RAW GitHub URL to the .md file
+    //
+    // Add as many as you need. Example placeholders below:
+    // ===========================================================
+    const MANUALS_DATA = [
+      {
+        id: "getting-started",
+        name: "Getting Started",
+        // TODO: Replace with your GitHub RAW Markdown URL:
+        url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/getting-started.md"
+      },
+      {
+        id: "admin-guide",
+        name: "Admin Guide",
+        // TODO: Replace with your GitHub RAW Markdown URL:
+        url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/admin-guide.md"
+      },
+      {
+        id: "end-user",
+        name: "End-User Manual",
+        // TODO: Replace with your GitHub RAW Markdown URL:
+        url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/end-user-manual.md"
+      }
+    ];
+
+    // ===========================================================
+    // Utility: Slugify heading text to create stable anchor IDs
+    // ===========================================================
+    function slugify(text) {
+      return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-");
+    }
+
+    // ===========================================================
+    // Build the categories list on the left
+    // ===========================================================
+    function buildManualList() {
+      const listEl = document.getElementById("manual-list");
+      listEl.innerHTML = "";
+      MANUALS_DATA.forEach(m => {
+        const li = document.createElement("li");
+        li.className = "category-item";
+        li.setAttribute("data-id", m.id);
+
+        const name = document.createElement("span");
+        name.className = "name";
+        name.textContent = m.name;
+
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = "Markdown";
+
+        li.appendChild(name);
+        li.appendChild(badge);
+        li.addEventListener("click", () => loadManualById(m.id));
+        listEl.appendChild(li);
+      });
+    }
+
+    // ===========================================================
+    // Render Markdown in the middle panel
+    // ===========================================================
+    async function renderMarkdown(mdText) {
+      // Configure Marked for GitHub-flavored markdown
+      marked.use({ gfm: true, breaks: false });
+
+      // Parse -> sanitize
+      const html = marked.parse(mdText);
+      const safeHtml = DOMPurify.sanitize(html, { ADD_ATTR: ["target"] });
+
+      const container = document.getElementById("markdown-view");
+      container.innerHTML = safeHtml;
+
+      // After rendering, assign IDs to headings and build TOC
+      assignHeadingIdsAndBuildTOC(container);
+    }
+
+    // ===========================================================
+    // Assign IDs to headings, then build the TOC on the right
+    // ===========================================================
+    function assignHeadingIdsAndBuildTOC(container) {
+      const headings = container.querySelectorAll("h1, h2, h3, h4, h5, h6");
+      const used = new Set();
+
+      headings.forEach(h => {
+        let base = slugify(h.textContent);
+        let id = base;
+        let i = 2;
+        while (used.has(id) || document.getElementById(id)) {
+          id = `${base}-${i++}`;
+        }
+        used.add(id);
+        h.id = id;
       });
 
-      // -------------------------------
-      // Manuals list (Markdown files)
-      // Put your Markdown files in /docs and list them here
-      // -------------------------------
-      const manuals = [
-        { id: 'getting-started', title: 'Getting Started Guide', file: 'https://github.com/Surya-Jaganathan/Website-UserManual-Category/blob/28ffa37744805f8f5ef08e7773e18effd0e48b59/getting-started.md', meta: 'Version 1.0 · Updated Oct 2025' },
-             ];
+      buildTOC(headings);
+    }
 
-      const manualListEl = document.getElementById('manualList');
-      const docTitleEl = document.getElementById('docTitle');
-      const docContentEl = document.getElementById('docContent');
-      const tocNavEl = document.getElementById('tocNav');
+    function buildTOC(headings) {
+      const toc = document.getElementById("toc");
+      toc.innerHTML = "";
 
-      // Render manual list
-      function renderManualList() {
-        manualListEl.innerHTML = '';
-        manuals.forEach((m, idx) => {
-          const li = document.createElement('li');
-          li.className = 'manual-item';
-          li.dataset.id = m.id;
+      headings.forEach(h => {
+        const level = parseInt(h.tagName.substring(1), 10);
+        const a = document.createElement("a");
+        a.href = `#${h.id}`;
+        a.textContent = h.textContent;
+        a.className = `level-${level}`;
+        toc.appendChild(a);
+      });
+    }
 
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.textContent = m.title;
-          btn.setAttribute('aria-controls', 'docContent');
-          btn.setAttribute('aria-label', `Open manual: ${m.title}`);
-          btn.addEventListener('click', () => selectManual(m.id));
+    // ===========================================================
+    // Load a manual by its `id` (from MANUALS_DATA)
+    // ===========================================================
+    async function loadManualById(id) {
+      const manual = MANUALS_DATA.find(m => m.id === id);
+      const statusEl = document.getElementById("load-status");
+      const titleEl = document.getElementById("current-manual-title");
 
-          li.appendChild(btn);
-          manualListEl.appendChild(li);
+      // Update selection highlight
+      document.querySelectorAll(".category-item").forEach(el => {
+        el.classList.toggle("active", el.getAttribute("data-id") === id);
+      });
 
-          if (idx === 0) li.classList.add('active');
-        });
+      if (!manual) {
+        titleEl.textContent = "Manual not found";
+        statusEl.textContent = "";
+        document.getElementById("markdown-view").innerHTML =
+          `<div class="placeholder"><p style="color:var(--danger)">Error: Manual ID "${id}" not found in MANUALS_DATA.</p></div>`;
+        return;
       }
 
-      // Fetch & render selected manual (Markdown -> HTML)
-      async function selectManual(id) {
-        const manual = manuals.find(m => m.id === id);
-        if (!manual) return;
+      titleEl.textContent = manual.name;
+      statusEl.textContent = "Loading…";
 
-        // Active state in sidebar
-        Array.from(manualListEl.children).forEach(li => {
-          li.classList.toggle('active', li.dataset.id === id);
-        });
+      try {
+        // NOTE: GitHub "Raw" URLs (raw.githubusercontent.com) support CORS and can be fetched from the browser.
+        const res = await fetch(manual.url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const mdText = await res.text();
+        await renderMarkdown(mdText);
+        statusEl.textContent = "Loaded ✓";
+        // Update URL hash so page can be shared/bookmarked
+        location.hash = manual.id;
+      } catch (err) {
+        statusEl.textContent = "";
+        document.getElementById("markdown-view").innerHTML =
+          `<div class="placeholder">
+             <p style="color:var(--danger)">Failed to load Markdown.</p>
+             <p><strong>Check the URL in MANUALS_DATA:</strong></p>
+             <pre>${manual.url}</pre>
+             <p style="color:var(--muted)">If the repository is private, the browser cannot fetch it without auth. Use a public repo or serve the files locally.</p>
+           </div>`;
+      }
+    }
 
-        // Update title
-        docTitleEl.textContent = manual.title;
+    // ===========================================================
+    // Init: build list, then open the manual from hash (if present)
+    // ===========================================================
+    function init() {
+      buildManualList();
+      const initialId = location.hash?.replace("#", "");
+      if (initialId) {
+        loadManualById(initialId);
+      }
+    }
 
-        // Fetch Markdown
-        docContentEl.setAttribute('aria-busy', 'true');
-        docContentEl.innerHTML = `<p class="doc-meta">${manual.meta}</p><p>Loading content…</p>`;
+    window.addEventListener("hashchange", () => {
+      const id = location.hash.replace("#", "");
+      if (id) loadManualById(id);
+    });
 
-        try {
-          const res = await fetch(manual.file, { cache: 'no-store' });
-          if (!res.ok) throw new Error(`Failed to load ${manual.file}: ${res.status}`);
-          const md = await res.text();
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</
 
-          // Convert Markdown → HTML and sanitize
-          const rawHtml = marked.parse(md);
-          const safeHtml = DOMPurify.sanitize(rawHtml, { USE_PROFILES: { html: true } });
-
-          // Render
-          docContentEl.innerHTML = `<p class="doc-meta">${manual.meta}</p>${safeHtml}`;
-          docContentEl.setAttribute('aria-busy', 'false');
-          docContentEl.focus({ preventScroll: true });
-
-          // Build TOC from headings
-          buildTOC();
-
-          // Update URL hash & remember selection
-          history.replaceState(null, '', `#${id}`);
-          localStorage.setItem('lastManualId', id);
-        } catch (err) {
-          console.error(err);
-          docContentEl.innerHTML = `
-            <p class="doc-meta">${manual.meta}</p>
