@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Manuals Portal</title>
 
+  <!-- =========================
+       THEME SYSTEM (Light/Dark)
+       ========================= -->
   <style>
     :root { color-scheme: light dark; }
     :root[data-theme="dark"] {
@@ -33,6 +36,7 @@
       --shadow: 0 8px 24px rgba(0,0,0,0.08);
     }
 
+    /* Reset + Base */
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     html { scroll-behavior: smooth; }
@@ -45,8 +49,10 @@
       color: var(--text);
     }
     a { color: var(--link); text-decoration: none; }
-    a:hover { text-decoration: underline; }
 
+    /* =========================
+       Header
+       ========================= */
     .site-header {
       position: sticky; top: 0; z-index: 100;
       display: grid;
@@ -84,6 +90,9 @@
       color: var(--text);
     }
 
+    /* =========================
+       Main layout (Content + TOC)
+       ========================= */
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 320px; /* content + TOC */
@@ -112,8 +121,8 @@
       background: transparent;
       padding: .25rem .5rem; border-radius: 8px; cursor: pointer;
     }
-    .collapse-btn:hover { color: var(--text); background: color-mix(in oklab, var(--panel) 88%, white 12%); }
-    .collapse-btn svg { width: 16px; height: 16px; }
+    .collapse-btn:hover { background: transparent; color: var(--muted); } /* no highlight on hover */
+
     .panel.collapsed .panel-body { display: none; }
     .panel.collapsed { min-height: 48px; }
 
@@ -143,7 +152,8 @@
     .toc .panel-body { overflow-y: auto; max-height: calc(100vh - 170px); }
     .toc nav { padding: .25rem .5rem; }
     .toc a { display: block; padding: .35rem .5rem; border-radius: 8px; color: var(--muted); }
-    .toc a:hover { background: color-mix(in oklab, var(--panel) 90%, white 10%); color: var(--text); }
+    .toc a:hover { background: transparent; color: var(--muted); text-decoration: underline; } /* no highlight */
+
     .toc .level-1 { margin-left: 0; font-weight: 700; color: var(--text); }
     .toc .level-2 { margin-left: .5rem; }
     .toc .level-3 { margin-left: 1rem; }
@@ -156,49 +166,64 @@
       .toc .panel-body { max-height: none; }
     }
 
+    /* =========================
+       Left Swipe Drawer (25% width)
+       ========================= */
     .menu-overlay {
       position: fixed; inset: 0;
-      background: color-mix(in oklab, var(--bg) 70%, black 30%);
-      backdrop-filter: blur(4px);
-      display: none; z-index: 300;
+      background: transparent; /* subtle overlay optional; keep clear since only 25% drawer */
+      pointer-events: none; /* only the drawer is interactive */
+      display: block; z-index: 300;
     }
-    .menu-overlay.open { display: block; }
-    .menu-dialog {
-      position: absolute; left: 50%; top: 50%;
-      transform: translate(-50%, -50%);
-      width: min(900px, 92vw); max-height: 80vh;
+    .menu-overlay.hidden { display: none; }
+
+    .menu-drawer {
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: clamp(280px, 25vw, 420px); /* ≈25% screen */
       background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 16px; box-shadow: var(--shadow);
-      overflow: hidden;
+      border-right: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+      pointer-events: auto; /* interactive */
+      display: grid; grid-template-rows: auto 1fr auto; /* header, body, footer */
     }
-    .menu-header {
-      display: flex; align-items: center; justify-content: space-between;
+    .menu-overlay.open .menu-drawer { transform: translateX(0); }
+
+    .menu-drawer-header {
+      display: flex; align-items: center; gap: .5rem;
       padding: .6rem .9rem; border-bottom: 1px solid var(--border);
     }
-    .menu-body {
-      display: grid; grid-template-rows: 1fr auto;
-      max-height: calc(80vh - 56px);
+    .menu-drawer-header .brand {
+      display: flex; align-items: center; height: 36px;
     }
-    .menu-section { padding: .9rem; overflow: auto; border-bottom: 1px dashed var(--border); }
-    .menu-title { margin: 0 0 .5rem; font-size: 1rem; font-weight: 600; }
-    .menu-close {
-      border: 1px solid var(--border); background: transparent; color: var(--muted);
-      padding: .25rem .5rem; border-radius: 8px; cursor: pointer;
+    .menu-drawer-header .brand img {
+      max-height: 100%; max-width: 160px; object-fit: contain;
     }
-    .menu-close:hover { color: var(--text); background: color-mix(in oklab, var(--panel) 88%, white 12%); }
+    .menu-title { margin-left: auto; font-weight: 600; font-size: .95rem; color: var(--muted); }
+
+    .menu-drawer-body {
+      padding: .6rem .9rem; overflow: auto;
+    }
     .index-list { list-style: none; margin: 0; padding: 0; }
     .index-item {
       display: grid; grid-template-columns: 1fr auto; align-items: center;
       gap: .5rem; padding: .6rem .75rem; border: 1px solid var(--border);
-      border-radius: 10px; margin-bottom: .5rem; cursor: pointer;
+      border-radius: 10px; margin-bottom: .6rem; cursor: pointer;
+      background: transparent; /* default */
     }
-    .index-item:hover { background: color-mix(in oklab, var(--panel) 90%, white 10%); }
-    .index-item .badge { font-size: .75rem; color: var(--muted); border: 1px solid var(--border); padding: .15rem .4rem; border-radius: 999px; }
+    .index-item:hover { background: transparent; } /* no hover highlight */
+    .index-item .badge {
+      font-size: .75rem; color: var(--muted);
+      border: 1px solid var(--border); padding: .15rem .4rem; border-radius: 999px;
+    }
 
+    .menu-drawer-footer {
+      padding: .6rem .9rem; border-top: 1px solid var(--border);
+    }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
-      gap: .75rem; padding: .5rem .25rem;
+      gap: .75rem; padding: .25rem 0;
     }
     .switch {
       position: relative; width: 52px; height: 28px;
@@ -215,17 +240,19 @@
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- ===================== HEADER ===================== -->
   <header class="site-header" aria-label="Site header">
+    <!-- Menu button (opens 25% left drawer) -->
     <button class="menu-btn" id="open-menu" title="Open Menu" aria-haspopup="true" aria-controls="menu-overlay">
+      <!-- Hamburger icon -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
         <path d="M4 6h16M4 12h16M4 18h16" stroke-width="2" stroke-linecap="round"/>
       </svg>
     </button>
 
-    <div class="logo company" aria-label="SysArc Infomatix">
+    <div class="logo company" aria-label="Company logo">
       <!-- TODO: Replace with your company logo path or URL -->
-      Company logo.png
+      <img src="Company logo.png" alt="Company logo">
     </div>
 
     <div class="site-title" aria-label="Company name">
@@ -235,12 +262,13 @@
 
     <div class="logo partner" aria-label="Partner logo">
       <!-- TODO: Replace with your partner logo path or URL -->
-      images/partner-logo.png
+      <img src="images/partner-logo.png" alt="Partner logo">
     </div>
   </header>
 
-  <!-- Layout -->
+  <!-- ===================== MAIN LAYOUT ===================== -->
   <main class="layout" aria-label="Main content" id="layout">
+    <!-- MIDDLE: Markdown viewer -->
     <section class="panel content" aria-label="Markdown viewer">
       <div class="panel-header">
         <h2 id="current-manual-title">No manual loaded</h2>
@@ -250,20 +278,25 @@
         <article id="markdown-view" class="markdown-body" aria-live="polite">
           <div class="placeholder">
             <h3>Welcome</h3>
-            <p>Open <strong>Menu</strong> (top-left) → pick a manual in <em>Index</em>. This area will render the Markdown content.</p>
+            <p>Click <strong>Menu</strong> (top-left) → pick a manual in <em>Index</em>. This area renders your Markdown.</p>
             <p style="color:var(--muted)">
-              <!-- TODO: Paste your GitHub RAW Markdown URLs in MANUALS_DATA below -->
-              Tip: In GitHub, open your .md file → click <strong>Raw</strong> → copy that URL.
+              <!--
+                TODO: Paste your GitHub RAW Markdown links in MANUALS_DATA below.
+                Each item needs: id, name, lang (e.g., 'Markdown'), url (RAW link).
+              -->
+              Tip: In GitHub, open your .md → click <strong>Raw</strong> → copy the URL.
             </p>
           </div>
         </article>
       </div>
     </section>
 
+    <!-- RIGHT: Table of contents (Collapsible) -->
     <aside class="panel toc" aria-label="Table of contents" id="panel-right">
       <div class="panel-header">
         <h2>Table of Contents</h2>
         <button class="collapse-btn" id="btn-collapse-right" aria-expanded="true" aria-controls="panel-right-body" title="Collapse TOC">
+          <!-- Chevron icon -->
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
             <path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -276,50 +309,82 @@
     </aside>
   </main>
 
-  <!-- Full-screen Menu -->
-  <div class="menu-overlay" id="menu-overlay" role="dialog" aria-modal="true" aria-label="Menu">
-    <div class="menu-dialog">
-      <div class="menu-header">
-        <strong>Menu</strong>
-        <button class="menu-close" id="close-menu" title="Close">Close</button>
+  <!-- ===================== LEFT SWIPE DRAWER (25%) ===================== -->
+  <div class="menu-overlay hidden" id="menu-overlay" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="menu-drawer" id="menu-drawer">
+      <!-- Drawer header: company logo top-left -->
+      <div class="menu-drawer-header">
+        <div class="brand">
+          <!-- TODO: Replace with the same (or another) company logo -->
+          <img src="Company logo.png" alt="Company logo">
+        </div>
+        <div class="menu-title">Index</div>
       </div>
 
-      <div class="menu-body">
-        <section class="menu-section" aria-label="Index">
-          <h3 class="menu-title">Index</h3>
-          <ul id="menu-index-list" class="index-list" aria-live="polite"></ul>
-        </section>
-        <section class="menu-section" aria-label="Appearance" style="border-bottom:none;">
-          <h3 class="menu-title">Theme</h3>
-          <div class="settings-row">
-            <span>Light / Dark</span>
-            <div class="switch" id="theme-switch" role="switch" aria-checked="false" tabindex="0" data-checked="false" title="Toggle Light/Dark">
-              <div class="thumb" aria-hidden="true"></div>
-            </div>
+      <!-- Drawer body: list of manuals with language badge -->
+      <div class="menu-drawer-body">
+        <ul id="drawer-index-list" class="index-list" aria-live="polite">
+          <!-- Items injected from MANUALS_DATA -->
+        </ul>
+      </div>
+
+      <!-- Drawer footer: Theme switch at bottom -->
+      <div class="menu-drawer-footer">
+        <div class="settings-row">
+          <span>Theme</span>
+          <div class="switch" id="theme-switch" role="switch" aria-checked="false" tabindex="0" data-checked="false" title="Toggle Light/Dark">
+            <div class="thumb" aria-hidden="true"></div>
           </div>
-          <p style="color:var(--muted); font-size:.85rem; margin:.25rem 0 0;">
-            Your choice is saved in <code>localStorage</code>.
-          </p>
-        </section>
+        </div>
+        <p style="color:var(--muted); font-size:.85rem; margin:.25rem 0 0;">
+          Remembers your choice via <code>localStorage</code>.
+        </p>
       </div>
     </div>
   </div>
 
-  <!-- ✅ Correct external script tags -->
+  <!-- ===================== DEPENDENCIES (correct tags) ===================== -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 
-  <!-- Page logic -->
+  <!-- ===================== PAGE LOGIC ===================== -->
   <script>
+    // ===========================================================
+    // TODO: Add your manuals
+    // - id: unique key
+    // - name: display name
+    // - lang: language label (e.g., "Markdown")
+    // - url: RAW GitHub URL to the .md file
+    // ===========================================================
     const MANUALS_DATA = [
-      { id: "getting-started", name: "PSB PMV Scheme", url: "https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md" },
-      { id: "admin-guide", name: "Admin Guide", url: "https://surya-jaganathan.github.io/Website-UserManual-Category/#getting-started" },
-      { id: "end-user", name: "End-User Manual", url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/end-user-manual.md" }
+      {
+        id: "getting-started",
+        name: "PSB PMV Scheme",
+        lang: "Markdown", // ← shown as badge
+        url: "https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md"
+      },
+      {
+        id: "admin-guide",
+        name: "Admin Guide",
+        lang: "Markdown",
+        url: "https://raw.githubusercontent.com/Surya-Jaganathan/Website-UserManual-Category/refs/heads/main/getting-started.md"
+      },
+      {
+        id: "end-user",
+        name: "End-User Manual",
+        lang: "Markdown",
+        url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/end-user-manual.md"
+      }
     ];
+
+    // Track the current manual for resolving relative assets (images)
     let CURRENT_MANUAL = null;
 
-    function buildMenuIndex() {
-      const listEl = document.getElementById("menu-index-list");
+    // ===========================================================
+    // Build Index list in the drawer (with language badge)
+    // ===========================================================
+    function buildDrawerIndex() {
+      const listEl = document.getElementById("drawer-index-list");
       listEl.innerHTML = "";
       MANUALS_DATA.forEach(m => {
         const li = document.createElement("li");
@@ -331,22 +396,30 @@
 
         const badge = document.createElement("span");
         badge.className = "badge";
-        badge.textContent = "Markdown";
+        badge.textContent = m.lang || "Markdown";
 
         li.appendChild(name);
         li.appendChild(badge);
         li.addEventListener("click", () => {
           loadManualById(m.id);
-          closeMenu();
+          closeMenu(); // close drawer after selection
         });
         listEl.appendChild(li);
       });
     }
 
+    // ===========================================================
+    // Utility: Slugify heading text for stable anchor IDs
+    // ===========================================================
     function slugify(text) {
-      return text.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+      return text.toLowerCase().trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-");
     }
 
+    // ===========================================================
+    // Render Markdown and fix relative images
+    // ===========================================================
     async function renderMarkdown(mdText) {
       marked.use({ gfm: true, breaks: false });
       const html = marked.parse(mdText);
@@ -355,6 +428,7 @@
       const container = document.getElementById("markdown-view");
       container.innerHTML = safeHtml;
 
+      // Resolve relative image paths using the md file's RAW URL as base
       if (CURRENT_MANUAL?.url) {
         const imgs = container.querySelectorAll("img");
         imgs.forEach(img => {
@@ -363,7 +437,7 @@
           try {
             const resolved = new URL(src, CURRENT_MANUAL.url).href;
             img.src = resolved;
-          } catch { /* ignore */ }
+          } catch { /* ignore malformed URLs */ }
           img.loading = "lazy";
           img.decoding = "async";
         });
@@ -372,6 +446,9 @@
       assignHeadingIdsAndBuildTOC(container);
     }
 
+    // ===========================================================
+    // Assign IDs to headings and build TOC
+    // ===========================================================
     function assignHeadingIdsAndBuildTOC(container) {
       const headings = container.querySelectorAll("h1, h2, h3, h4, h5, h6");
       const used = new Set();
@@ -379,7 +456,9 @@
         let base = slugify(h.textContent);
         let id = base || h.tagName.toLowerCase();
         let i = 2;
-        while (used.has(id) || document.getElementById(id)) id = `${base}-${i++}`;
+        while (used.has(id) || document.getElementById(id)) {
+          id = `${base}-${i++}`;
+        }
         used.add(id);
         h.id = id;
       });
@@ -397,6 +476,7 @@
         a.className = `level-${level}`;
         toc.appendChild(a);
       });
+      // Smooth scroll (no background highlight on hover per request)
       toc.querySelectorAll("a").forEach(a => {
         a.addEventListener("click", (ev) => {
           ev.preventDefault();
@@ -409,6 +489,9 @@
       });
     }
 
+    // ===========================================================
+    // Load a manual by ID
+    // ===========================================================
     async function loadManualById(id) {
       const manual = MANUALS_DATA.find(m => m.id === id);
       const statusEl = document.getElementById("load-status");
@@ -428,7 +511,7 @@
 
       try {
         const res = await fetch(manual.url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
         const mdText = await res.text();
         await renderMarkdown(mdText);
         statusEl.textContent = "Loaded ✓";
@@ -440,12 +523,14 @@
              <p style="color:var(--danger)">Failed to load Markdown.</p>
              <p><strong>Check the URL:</strong></p>
              <pre>${manual.url}</pre>
-             <p style="color:var(--muted)">If the repo is private, browsers can't fetch RAW without auth (CORS). Use a public repo or proxy.</p>
+             <p style="color:var(--muted)">If the repo is private, browsers can’t fetch RAW without auth (CORS). Use a public repo or proxy.</p>
            </div>`;
       }
     }
 
+    // ===========================================================
     // TOC collapse (button remains visible)
+    // ===========================================================
     const panelRight = document.getElementById("panel-right");
     const btnRight = document.getElementById("btn-collapse-right");
     function toggleRightCollapse() {
@@ -455,18 +540,25 @@
     }
     btnRight.addEventListener("click", toggleRightCollapse);
 
-    // Full-screen Menu open/close
+    // ===========================================================
+    // Drawer (25%) open/close
+    // ===========================================================
     const overlay = document.getElementById("menu-overlay");
     const openBtn = document.getElementById("open-menu");
-    const closeBtn = document.getElementById("close-menu");
-    function openMenu() { overlay.classList.add("open"); }
-    function closeMenu() { overlay.classList.remove("open"); }
+    function openMenu() { overlay.classList.remove("hidden"); overlay.classList.add("open"); }
+    function closeMenu() { overlay.classList.add("hidden"); overlay.classList.remove("open"); }
     openBtn.addEventListener("click", openMenu);
-    closeBtn.addEventListener("click", closeMenu);
-    overlay.addEventListener("click", (e) => { if (e.target === overlay) closeMenu(); });
+    // Close drawer when clicking outside (optional: click on overlay area)
+    overlay.addEventListener("click", (e) => {
+      // Close only if clicked outside the drawer
+      if (!document.getElementById("menu-drawer").contains(e.target)) closeMenu();
+    });
+    // Escape key closes drawer
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
 
-    // Theme switch
+    // ===========================================================
+    // Theme switch (persist with localStorage)
+    // ===========================================================
     const themeSwitch = document.getElementById("theme-switch");
     function applyTheme(theme) {
       document.documentElement.setAttribute("data-theme", theme);
@@ -489,11 +581,13 @@
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleTheme(); }
     });
 
+    // ===========================================================
     // Init
+    // ===========================================================
     function init() {
       try {
         initTheme();
-        buildMenuIndex();
+        buildDrawerIndex();
         if (MANUALS_DATA[0]) loadManualById(MANUALS_DATA[0].id);
       } catch (err) {
         console.error("Init error:", err);
@@ -503,5 +597,4 @@
   </script>
 </body>
 </html>
-``
 
