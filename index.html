@@ -16,7 +16,7 @@
       --panel: #111827;
       --text: #e5e7eb;
       --muted: #9ca3af;
-      --brand: #4f46e5;         /* TODO: change to your brand, e.g., #3B82F6 */
+      --brand: #4f46e5;         /* TODO: your brand color, e.g., #3B82F6 */
       --border: #1f2937;
       --link: #60a5fa;
       --success: #10b981;
@@ -28,7 +28,7 @@
       --panel: #ffffff;
       --text: #1f2937;
       --muted: #6b7280;
-      --brand: #4f46e5;         /* TODO: change to your brand */
+      --brand: #4f46e5;         /* TODO: your brand color */
       --border: #e5e7eb;
       --link: #1d4ed8;
       --success: #0f766e;
@@ -212,7 +212,7 @@
        ========================= */
     .menu-overlay {
       position: fixed; inset: 0;
-      background: color-mix(in oklab, var(--bg) 40%, black 10%); /* subtle backdrop so outside click works */
+      background: color-mix(in oklab, var(--bg) 40%, black 10%); /* subtle backdrop */
       display: none; z-index: 300;
     }
     .menu-overlay.open { display: block; }
@@ -289,7 +289,7 @@
     </button>
 
     <div class="logo company" aria-label="Company logo">
-      <!-- TODO: Replace with your company logo path or URL -->
+      <!-- ✅ Company logo file (in the same folder) -->
       <img src="Company logo.png" alt="Company logo" />
     </div>
 
@@ -319,7 +319,7 @@
             <p>Click <strong>Menu</strong> (top-left) → pick a manual in <em>Index</em>. This area renders your Markdown.</p>
             <p style="color:var(--muted)">
               <!--
-                TODO: Paste your GitHub RAW Markdown links in MANUALS_DATA below.
+                TODO: Add more manuals in MANUALS_DATA below.
                 Each item needs: id, name, lang (e.g., 'Markdown'), url (RAW link).
               -->
               Tip: In GitHub, open your .md → click <strong>Raw</strong> → copy the URL.
@@ -352,7 +352,6 @@
       <!-- Drawer header: company logo top-left -->
       <div class="menu-drawer-header">
         <div class="brand">
-          <!-- TODO: Replace with the same (or another) company logo -->
           <img src="Company logo.png" alt="Company logo" />
         </div>
         <div class="menu-title">Index</div>
@@ -387,7 +386,7 @@
   <!-- ===================== PAGE LOGIC ===================== -->
   <script>
     // ===========================================================
-    // TODO: Add your manuals
+    // Manuals list (add more items as needed)
     // - id: unique key
     // - name: display name
     // - lang: language label (e.g., "Markdown")
@@ -395,23 +394,14 @@
     // ===========================================================
     const MANUALS_DATA = [
       {
-        id: "getting-started",
-        name: "Getting Started",
-        url: "https://raw.githubusercontent.com/Surya-Jaganathan/Website-UserManual-Category/refs/heads/main/getting-started.md"
-      },
-      {
-        id: "admin-guide",
-        name: "PSB PMV Scheme",
+        id: "pmv-scheme",
+        name: "PMV Scheme",
+        lang: "Markdown",
         url: "https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md"
-      },
-      {
-        id: "end-user",
-        name: "End-User Manual",
-        url: "https://raw.githubusercontent.com/your-org/your-repo/main/docs/end-user-manual.md"
       }
+      // ,{ id: "another-manual", name: "Another Manual", lang: "Markdown", url: "https://raw.githubusercontent.com/..." }
     ];
 
-    // Track current manual for resolving relative images
     let CURRENT_MANUAL = null;
 
     // Build Index (drawer)
@@ -431,9 +421,23 @@
         badge.textContent = m.lang || "Markdown";
 
         li.appendChild(name);
-                 });
+        li.appendChild(badge);
+        li.addEventListener("click", () => {
+          loadManualById(m.id);
+          closeMenu();
+        });
         listEl.appendChild(li);
       });
+    }
+
+    // Utility: normalize RAW URLs (fallback if GitHub returns 404 on refs/heads)
+    function normalizeRawUrl(url) {
+      try {
+        // If URL contains '/refs/heads/', GitHub RAW also supports '/main/' style
+        return url.replace("/refs/heads/", "/");
+      } catch {
+        return url;
+      }
     }
 
     // Slugify headings
@@ -445,8 +449,7 @@
 
     // Render Markdown + fix relative images
     async function renderMarkdown(mdText) {
-      marked.use({ gfm: true, breaks: false });
-      const html = marked.parse(mdText);
+      const html = marked.parse(mdText, { gfm: true, breaks: false });
       const safeHtml = DOMPurify.sanitize(html, { ADD_ATTR: ["target"] });
 
       const container = document.getElementById("markdown-view");
@@ -454,12 +457,13 @@
 
       // Resolve relative image paths using the md file's RAW URL as base
       if (CURRENT_MANUAL?.url) {
+        const baseUrl = CURRENT_MANUAL.url;
         const imgs = container.querySelectorAll("img");
         imgs.forEach(img => {
           const src = img.getAttribute("src");
           if (!src) return;
           try {
-            const resolved = new URL(src, CURRENT_MANUAL.url).href;
+            const resolved = new URL(src, baseUrl).href;
             img.src = resolved;
           } catch { /* ignore malformed URLs */ }
           img.loading = "lazy";
@@ -529,10 +533,22 @@
       titleEl.textContent = manual.name;
       statusEl.textContent = "Loading…";
 
+      // Try original URL, fallback to normalized URL if it fails
+      let rawUrl = manual.url;
       try {
-        const res = await fetch(manual.url, { cache: "no-store" });
-        if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
+        let res = await fetch(rawUrl, { cache: "no-store" });
+        if (!res.ok) {
+          // Retry with normalized URL
+          const fallback = normalizeRawUrl(rawUrl);
+          if (fallback !== rawUrl) {
+            res = await fetch(fallback, { cache: "no-store" });
+            rawUrl = fallback;
+          }
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const mdText = await res.text();
+        // Update manual URL to the working one for image resolution
+        CURRENT_MANUAL.url = rawUrl;
         await renderMarkdown(mdText);
         statusEl.textContent = "Loaded ✓";
       } catch (err) {
@@ -541,8 +557,8 @@
         document.getElementById("markdown-view").innerHTML =
           `<div class="placeholder">
              <p style="color:var(--danger)">Failed to load Markdown.</p>
-             <p><strong>Check the URL:</strong></p>
-             <pre>${manual.url}</pre>
+             <p><strong>Tried URL(s):</strong></p>
+             <pre>${manual.url}\n${normalizeRawUrl(manual.url)}</pre>
              <p style="color:var(--muted)">If the repo is private, browsers can’t fetch RAW without auth (CORS). Use a public repo or proxy.</p>
            </div>`;
       }
@@ -562,8 +578,13 @@
     const overlay = document.getElementById("menu-overlay");
     const openBtn = document.getElementById("open-menu");
     const drawer = document.getElementById("menu-drawer");
-    function openMenu() { overlay.classList.add("open"); }
-    function closeMenu() { overlay.classList.remove("open"); }
+    function openMenu(e) {
+      if (e) e.stopPropagation();
+      overlay.classList.add("open");
+    }
+    function closeMenu() {
+      overlay.classList.remove("open");
+    }
     openBtn.addEventListener("click", openMenu);
     // Close when clicking outside the drawer
     overlay.addEventListener("click", (e) => {
@@ -604,4 +625,5 @@
     document.addEventListener("DOMContentLoaded", init);
   </script>
 </body>
+</
 
