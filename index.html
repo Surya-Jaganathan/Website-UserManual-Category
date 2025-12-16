@@ -6,12 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Multi-Manual Viewer</title>
 
-  <!-- =========================
-       Inline CSS (branding + layout)
-       ========================= -->
   <style>
     :root {
-      /* Brand colors – tweak as needed */
       --color-bg: #ffffff;
       --color-text: #1f2937;
       --color-muted: #6b7280;
@@ -19,8 +15,6 @@
       --color-border: #e5e7eb;
       --color-header-bg: #f8fafc;
       --color-card-bg: #ffffff;
-
-      /* Hover colors */
       --color-hover: #eef2ff;
       --color-toc-bg: #f9fafb;
     }
@@ -35,7 +29,6 @@
       --color-hover: #172554;
       --color-toc-bg: #0b1220;
     }
-
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
@@ -43,8 +36,7 @@
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Helvetica Neue", sans-serif;
       background: var(--color-bg);
       color: var(--color-text);
-      /* Reserve space for fixed header height */
-      padding-top: 64px; /* = header height */
+      padding-top: 64px; /* reserve space for fixed header */
     }
     .sr-only {
       position: absolute !important;
@@ -53,9 +45,7 @@
       white-space: nowrap;
     }
 
-    /* =========================
-       Fixed Header (always visible)
-       ========================= */
+    /* Header (fixed) */
     .header {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -74,7 +64,6 @@
       align-items: center;
       gap: 10px;
     }
-    /* Simple Menu button (icon only) */
     .menu-button {
       display: inline-flex;
       align-items: center;
@@ -88,9 +77,7 @@
       cursor: pointer;
     }
     .menu-button:hover { background: var(--color-hover); }
-    .hamburger-icon {
-      width: 20px; height: 20px; fill: currentColor;
-    }
+    .hamburger-icon { width: 20px; height: 20px; fill: currentColor; }
 
     .logo {
       display: inline-flex;
@@ -107,19 +94,17 @@
     .partner { justify-self: end; }
     .partner img { height: 28px; width: auto; }
 
-    /* =========================
-       Drawer (left)
-       ========================= */
+    /* Drawer */
     .drawer-backdrop {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.4);
       z-index: 900;
-      display: none; /* shown via JS */
+      display: none; /* toggled via JS */
     }
     .drawer {
       position: fixed;
-      top: 64px; /* below fixed header */
+      top: 64px; /* below header */
       left: 0;
       height: calc(100vh - 64px);
       width: 320px;
@@ -155,7 +140,6 @@
       border-top: 1px solid var(--color-border);
       padding: 12px 16px;
     }
-    /* Theme toggle button */
     .theme-toggle {
       width: 100%;
       padding: 10px 12px;
@@ -168,36 +152,24 @@
     }
     .theme-toggle:hover { background: var(--color-hover); }
 
-    /* =========================
-       Layout: Fixed TOC at right + scrollable main
-       ========================= */
-    .layout { display: block; }
-
-    /* Card container styles */
+    /* Cards / layout */
     .card {
       background: var(--color-card-bg);
       border: 1px solid var(--color-border);
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
-
-    /* Fixed TOC on the right (static position) */
     .toc-card {
       position: fixed;
-      top: 80px;    /* a bit below header */
-      right: 16px;
+      top: 80px; right: 16px;
       width: 320px;
-      height: calc(100vh - 96px); /* viewport minus header + margins */
+      height: calc(100vh - 96px);
       padding: 12px;
       background: var(--color-toc-bg);
-      overflow: auto; /* TOC contents scroll inside */
+      overflow: auto;
       z-index: 800;
     }
-    .toc-card h3 {
-      margin: 8px 0 10px;
-      font-size: 16px;
-      font-weight: 600;
-    }
+    .toc-card h3 { margin: 8px 0 10px; font-size: 16px; font-weight: 600; }
     .toc-list { list-style: none; padding-left: 8px; margin: 0; }
     .toc-list li { margin: 6px 0; }
     .toc-list a {
@@ -219,15 +191,12 @@
       border-color: var(--color-border);
     }
 
-    /* Main content card (left area) */
     .main-card {
-      /* Leave space for fixed TOC */
-      margin-right: 360px; /* TOC width + gap */
+      margin-right: 360px; /* leave space for fixed TOC */
       margin-left: 16px;
       margin-top: 16px;
       padding: 20px;
     }
-    .article { max-width: 100%; }
     .article img { max-width: 100%; height: auto; }
     .article pre {
       background: #0b1220; color: #e2e8f0; padding: 12px; border-radius: 8px;
@@ -236,32 +205,28 @@
     .article table { border-collapse: collapse; width: 100%; }
     .article th, .article td { border: 1px solid var(--color-border); padding: 8px; }
 
-    /* Mobile: TOC disappears, main uses full width */
     @media (max-width: 1024px) {
       .toc-card { display: none; }
-      .main-card { margin-right: 16px; } /* no TOC on mobile */
+      .main-card { margin-right: 16px; }
     }
     @media (max-width: 640px) {
-      .partner { display: none; } /* hide partner logo on very small screens */
+      .partner { display: none; }
     }
   </style>
 </head>
 <body>
-  <!-- =========================
-       Fixed Header
-       ========================= -->
+  <!-- Header -->
   <header class="header" role="banner">
     <div class="header-left">
-      <!-- Simple Menu button with icon -->
+      <!-- Menu (hamburger icon) -->
       <button class="menu-button" id="menuButton" aria-controls="appDrawer" aria-expanded="false" aria-label="Open menu">
-        <!-- Hamburger SVG icon -->
-        <svg class="hamburger-icon" viewBox="0 0 24 24">
+        <svg class="hamburger-icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M3 6h18v2H3zM3 11h18v2H3zM3 16h18v2H3z"></path>
         </svg>
       </button>
 
       <!-- Company logo (click → Home) -->
-      <a class="logo" id="homeLink" href="#" aria-label="Home">
+      <a href="#" class="logo" id="homeLink">
         <img id="companyLogo" alt="Company Logo" />
         <span class="sr-only">Home</span>
       </a>
@@ -274,13 +239,10 @@
     </div>
   </header>
 
-  <!-- =========================
-       Drawer (left)
-       ========================= -->
+  <!-- Drawer -->
   <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
   <aside class="drawer" id="appDrawer" aria-hidden="true" aria-label="Menu">
     <div class="drawer-header">
-      <!-- First row: company logo only -->
       <img id="drawerCompanyLogo" alt="Company Logo" />
     </div>
     <div class="drawer-content">
@@ -292,48 +254,37 @@
     </div>
   </aside>
 
-  <!-- =========================
-       TOC (static fixed card on the right)
-       ========================= -->
+  <!-- TOC (fixed) -->
   <nav class="card toc-card" id="toc" aria-label="Table of contents">
     <h3>Table of Content</h3>
     <ul class="toc-list" id="tocList"></ul>
   </nav>
 
-  <!-- =========================
-       Main content card (scrolls normally)
-       ========================= -->
+  <!-- Main -->
   <main class="layout" role="main">
     <section class="card main-card">
       <article class="article" id="article" aria-label="Manual content"></article>
     </section>
   </main>
 
-  <!-- =========================
-       Libraries: Marked + DOMPurify
-       ========================= -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
-  <!-- =========================
-       Inline App JS (single file)
-       ========================= -->
+  <!-- App JS -->
   <script>
     (function() {
-      // ----------------------------
-      // CONFIG – set your brand assets here
-      // ----------------------------
+      // ---------- CONFIG ----------
       const CONFIG = {
-        COMPANY_NAME: 'Your Company',                 // Middle header (italic)
-        COMPANY_LOGO_SRC: 'images/company-logo.png',  // Header + drawer logo (you add this file)
-        PARTNER_LOGO_SRC: 'images/partner-logo.png',  // Right header logo (view-only)
-        // Fallback inline SVG (shows if logo path is missing or fails)
+        COMPANY_NAME: 'Your Company',
+        COMPANY_LOGO_SRC: 'images/company-logo.png',
+        PARTNER_LOGO_SRC: 'images/partner-logo.png',
         FALLBACK_LOGO_DATAURI:
           'data:image/svg+xml;utf8,' +
-          encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"160\" height=\"40\"><rect width=\"160\" height=\"40\" rx=\"6\" fill=\"#0a6cff\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"16\" fill=\"#ffffff\">LOGO</text></svg>')
+          encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="40"><rect width="160" height="40" rx="6" fill="#0a6cff"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="16" fill="#ffffff">LOGO</text></svg>')
       };
 
-      // Inline "Home" page – first item in MANIFEST
+      // ---------- Home content ----------
       const HOME_MD = `
 # Welcome to the User Manuals
 
@@ -356,7 +307,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
 > If you need help or spot a broken link, notify the documentation team.
       `;
 
-      // Manuals list (first = Home)
+      // ---------- Manifest ----------
       const MANIFEST = [
         { title: 'Home', inline: true, md: HOME_MD },
         {
@@ -364,11 +315,9 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           url: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md',
           base: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/'
         }
-        // Add more manuals here as needed:
-        // { title: 'Another Manual', url: 'https://raw.githubusercontent.com/ORG/REPO/BRANCH/docs/guide.md', base: 'https://raw.githubusercontent.com/ORG/REPO/BRANCH/docs/' }
       ];
 
-      // Elements
+      // ---------- Elements ----------
       const els = {
         article: document.getElementById('article'),
         tocList: document.getElementById('tocList'),
@@ -384,17 +333,13 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         homeLink: document.getElementById('homeLink'),
       };
 
-      /* ---------- Safe logo load with fallback ---------- */
+      // ---------- Helpers ----------
       function setLogo(imgEl, src) {
-        if (!src) {
-          imgEl.src = CONFIG.FALLBACK_LOGO_DATAURI;
-          return;
-        }
+        if (!src) { imgEl.src = CONFIG.FALLBACK_LOGO_DATAURI; return; }
         imgEl.src = src;
         imgEl.onerror = () => { imgEl.src = CONFIG.FALLBACK_LOGO_DATAURI; };
       }
 
-      /* ---------- Branding ---------- */
       function initBranding() {
         els.companyName.textContent = CONFIG.COMPANY_NAME;
         setLogo(els.companyLogo, CONFIG.COMPANY_LOGO_SRC);
@@ -402,7 +347,6 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         setLogo(els.partnerLogo, CONFIG.PARTNER_LOGO_SRC);
       }
 
-      /* ---------- Theme ---------- */
       function applySavedTheme() {
         const saved = localStorage.getItem('mmv-theme');
         if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
@@ -419,7 +363,6 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         }
       }
 
-      /* ---------- Drawer ---------- */
       function openDrawer() {
         els.drawer.classList.add('open');
         els.drawer.setAttribute('aria-hidden', 'false');
@@ -434,14 +377,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         els.drawerBackdrop.style.display = 'none';
         els.menuButton.setAttribute('aria-expanded', 'false');
       }
-      els.menuButton.addEventListener('click', () => {
-        const open = els.menuButton.getAttribute('aria-expanded') === 'true';
-        if (open) closeDrawer(); else openDrawer();
-      });
-      els.drawerBackdrop.addEventListener('click', closeDrawer);
-      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
 
-      /* ---------- Index ---------- */
       function buildIndex() {
         els.drawerIndex.innerHTML = '';
         MANIFEST.forEach(item => {
@@ -459,14 +395,16 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         });
       }
 
-      /* ---------- Link rewriting for external manuals ---------- */
       function rewriteRelativeUrlsWithBase(mdText, base) {
         function toRawUrl(rel) {
           if (/^(https?:)?\/\//i.test(rel)) return rel;
           if (rel.startsWith('#')) return rel;
-          if (rel.startsWith('/')) {
+          if (rel.starts_with && rel.starts_with('/')) { /* some browsers */
+            rel = rel.replace(/^\//, '');
+            return base.replace(/[^/]+$/, '') + rel;
+          }
+          if (rel.charAt && rel.charAt(0) === '/') {
             const clean = rel.replace(/^\//, '');
-            // Treat root-relative as repo root of base
             return base.replace(/[^/]+$/, '') + clean;
           }
           return base + rel;
@@ -476,7 +414,6 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         return mdText;
       }
 
-      /* ---------- TOC ---------- */
       function buildToc() {
         const headings = els.article.querySelectorAll('h1, h2, h3, h4, h5, h6');
         const tocItems = [];
@@ -496,6 +433,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           li.appendChild(a);
           els.tocList.appendChild(li);
         });
+
         // Scroll spy
         const observer = new IntersectionObserver((entries) => {
           entries.forEach(entry => {
@@ -510,7 +448,6 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         headings.forEach(h => observer.observe(h));
       }
 
-      /* ---------- Manual Loader ---------- */
       async function loadManual(item) {
         els.article.innerHTML = '<p>Loading…</p>';
         try {
@@ -524,13 +461,12 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
             if (item.base) mdText = rewriteRelativeUrlsWithBase(mdText, item.base);
           }
 
-          // Render Markdown
           marked.setOptions({ gfm: true, breaks: false, headerIds: true, mangle: false });
           const html = marked.parse(mdText);
           const safe = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
           els.article.innerHTML = safe;
 
-          // Intercept md links to other .md files for SPA-like navigation
+          // Intercept md links
           els.article.querySelectorAll('a[href]').forEach(a => {
             const href = a.getAttribute('href');
             const isAbs = /^(https?:)?\/\//i.test(href);
@@ -542,8 +478,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
                   const nextBase = href.replace(/[^/]+$/, '');
                   loadManual({ title: href, url: href, base: nextBase });
                 } else if (item.inline) {
-                  // Relative from inline (Home) has no base; inform user
-                  alert('This link is relative and cannot be resolved from the Home page.');
+                  alert('This relative link cannot be resolved from Home.');
                 } else if (item.base) {
                   const full = href.startsWith('/') ? (item.base.replace(/docs\/?$/, '') + href.replace(/^\//, '')) : (item.base + href);
                   const nextBase = full.replace(/[^/]+$/, '');
@@ -555,8 +490,6 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           });
 
           buildToc();
-
-          // Update URL hash (deep-link)
           const encoded = encodeURIComponent(item.inline ? 'HOME' : item.url);
           history.replaceState(null, '', `#manual=${encoded}`);
         } catch (err) {
@@ -564,7 +497,6 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         }
       }
 
-      // Load from hash if present
       function loadManualFromHash() {
         const m = location.hash.match(/manual=([^&]+)/);
         if (m) {
@@ -575,20 +507,27 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         }
       }
 
-          tDefault();
+      // Events
+      els.menuButton.addEventListener('click', () => {
+        const open = els.menuButton.getAttribute('aria-expanded') === 'true';
+        if (open) closeDrawer(); else openDrawer();
+      });
+      els.drawerBackdrop.addEventListener('click', closeDrawer);
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+      els.homeLink.addEventListener('click', (e) => {
+        e.preventDefault();
         loadManual(MANIFEST[0]); // Home
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
-
-      // Theme toggle
       els.themeToggle.addEventListener('click', toggleTheme);
 
       // Init
       initBranding();
       applySavedTheme();
       buildIndex();
-      if (!loadManualFromHash()) loadManual(MANIFEST[0]); // Default to Home
+      if (!loadManualFromHash()) loadManual(MANIFEST[0]); // default Home
     })();
   </script>
 </body>
+</html>
 
