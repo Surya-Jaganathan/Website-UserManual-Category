@@ -74,18 +74,24 @@
       align-items: center;
       gap: 10px;
     }
-    /* Simple Menu button (plain style) */
+    /* Simple Menu button (icon only) */
     .menu-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       background: transparent;
       color: var(--color-text);
       border: 1px solid var(--color-border);
       border-radius: 6px;
-      padding: 6px 12px;
+      padding: 6px;
+      width: 38px; height: 38px;
       cursor: pointer;
     }
-    .menu-button:hover {
-      background: var(--color-hover);
+    .menu-button:hover { background: var(--color-hover); }
+    .hamburger-icon {
+      width: 20px; height: 20px; fill: currentColor;
     }
+
     .logo {
       display: inline-flex;
       align-items: center;
@@ -149,18 +155,24 @@
       border-top: 1px solid var(--color-border);
       padding: 12px 16px;
     }
+    /* Theme toggle button */
     .theme-toggle {
-      width: 100%; padding: 8px 10px; border-radius: 8px;
-      border: 1px solid var(--color-border); background: var(--color-header-bg);
-      color: var(--color-text); cursor: pointer;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      background: var(--color-header-bg);
+      color: var(--color-text);
+      cursor: pointer;
+      font-weight: 600;
     }
+    .theme-toggle:hover { background: var(--color-hover); }
 
     /* =========================
        Layout: Fixed TOC at right + scrollable main
        ========================= */
-    .layout {
-      display: block; /* Containers handled with fixed TOC + margins */
-    }
+    .layout { display: block; }
+
     /* Card container styles */
     .card {
       background: var(--color-card-bg);
@@ -172,7 +184,7 @@
     /* Fixed TOC on the right (static position) */
     .toc-card {
       position: fixed;
-      top: 80px; /* a bit below header */
+      top: 80px;    /* a bit below header */
       right: 16px;
       width: 320px;
       height: calc(100vh - 96px); /* viewport minus header + margins */
@@ -240,11 +252,16 @@
        ========================= -->
   <header class="header" role="banner">
     <div class="header-left">
-      <!-- Simple Menu button -->
-      <button class="menu-button" id="menuButton" aria-controls="appDrawer" aria-expanded="false">Menu</button>
+      <!-- Simple Menu button with icon -->
+      <button class="menu-button" id="menuButton" aria-controls="appDrawer" aria-expanded="false" aria-label="Open menu">
+        <!-- Hamburger SVG icon -->
+        <svg class="hamburger-icon" viewBox="0 0 24 24">
+          <path d="M3 6h18v2H3zM3 11h18v2H3zM3 16h18v2H3z"></path>
+        </svg>
+      </button>
 
       <!-- Company logo (click → Home) -->
-      #
+      <a class="logo" id="homeLink" href="#" aria-label="Home">
         <img id="companyLogo" alt="Company Logo" />
         <span class="sr-only">Home</span>
       </a>
@@ -263,7 +280,7 @@
   <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
   <aside class="drawer" id="appDrawer" aria-hidden="true" aria-label="Menu">
     <div class="drawer-header">
-      <!-- First row: company logo only (no title text) -->
+      <!-- First row: company logo only -->
       <img id="drawerCompanyLogo" alt="Company Logo" />
     </div>
     <div class="drawer-content">
@@ -271,7 +288,7 @@
       <ul class="drawer-index" id="drawerIndex"></ul>
     </div>
     <div class="drawer-footer">
-      <button class="theme-toggle" id="themeToggle">Toggle Dark/Light</button>
+      <button class="theme-toggle" id="themeToggle" type="button">Toggle Dark/Light</button>
     </div>
   </aside>
 
@@ -307,9 +324,13 @@
       // CONFIG – set your brand assets here
       // ----------------------------
       const CONFIG = {
-        COMPANY_NAME: 'LendPerfect User manual',                 // Middle header (italic)
-        COMPANY_LOGO_SRC: 'Company logo.png',  // Header + drawer logo (you add this file)
+        COMPANY_NAME: 'Your Company',                 // Middle header (italic)
+        COMPANY_LOGO_SRC: 'images/company-logo.png',  // Header + drawer logo (you add this file)
         PARTNER_LOGO_SRC: 'images/partner-logo.png',  // Right header logo (view-only)
+        // Fallback inline SVG (shows if logo path is missing or fails)
+        FALLBACK_LOGO_DATAURI:
+          'data:image/svg+xml;utf8,' +
+          encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"160\" height=\"40\"><rect width=\"160\" height=\"40\" rx=\"6\" fill=\"#0a6cff\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" font-family=\"Arial\" font-size=\"16\" fill=\"#ffffff\">LOGO</text></svg>')
       };
 
       // Inline "Home" page – first item in MANIFEST
@@ -320,11 +341,11 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
 
 ## How to Use This Site
 
-- **Open the menu**: Click the **Menu** button at the top-left.
+- **Open the menu**: Click the **Menu** button (top-left).
 - **Pick a manual**: In the **Manuals** list (drawer), select the document you want to read. It opens in the main area.
 - **Follow sections with TOC**: The **Table of Content** on the **right** (desktop) lists the sections of the current manual. Click any entry to **jump** to that section.
 - **On mobile**: The TOC is hidden to save space; use the **Menu** for navigation. Headings inside the manual are still anchorable.
-- **Dark/Light theme**: Use the **Toggle Dark/Light** switch at the bottom of the menu.
+- **Dark/Light theme**: Use the **Toggle Dark/Light** button at the bottom of the menu.
 
 ## Helpful Tips
 
@@ -360,20 +381,25 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         drawer: document.getElementById('appDrawer'),
         drawerBackdrop: document.getElementById('drawerBackdrop'),
         themeToggle: document.getElementById('themeToggle'),
-        // For logo → home handler
         homeLink: document.getElementById('homeLink'),
       };
+
+      /* ---------- Safe logo load with fallback ---------- */
+      function setLogo(imgEl, src) {
+        if (!src) {
+          imgEl.src = CONFIG.FALLBACK_LOGO_DATAURI;
+          return;
+        }
+        imgEl.src = src;
+        imgEl.onerror = () => { imgEl.src = CONFIG.FALLBACK_LOGO_DATAURI; };
+      }
 
       /* ---------- Branding ---------- */
       function initBranding() {
         els.companyName.textContent = CONFIG.COMPANY_NAME;
-        if (CONFIG.COMPANY_LOGO_SRC) {
-          els.companyLogo.src = CONFIG.COMPANY_LOGO_SRC;
-          els.drawerCompanyLogo.src = CONFIG.COMPANY_LOGO_SRC;
-        }
-        if (CONFIG.PARTNER_LOGO_SRC) {
-          els.partnerLogo.src = CONFIG.PARTNER_LOGO_SRC;
-        }
+        setLogo(els.companyLogo, CONFIG.COMPANY_LOGO_SRC);
+        setLogo(els.drawerCompanyLogo, CONFIG.COMPANY_LOGO_SRC);
+        setLogo(els.partnerLogo, CONFIG.PARTNER_LOGO_SRC);
       }
 
       /* ---------- Theme ---------- */
@@ -549,15 +575,13 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         }
       }
 
-      // Logo → Home (works even without a dedicated #homeLink element)
-      document.querySelector('.logo').addEventListener('click', (e) => {
-        e.preventDefault();
+          tDefault();
         loadManual(MANIFEST[0]); // Home
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
 
       // Theme toggle
-      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      els.themeToggle.addEventListener('click', toggleTheme);
 
       // Init
       initBranding();
@@ -567,5 +591,4 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
     })();
   </script>
 </body>
-</html>
 
