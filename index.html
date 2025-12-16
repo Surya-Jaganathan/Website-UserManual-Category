@@ -1,47 +1,233 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Multi-Manual Viewer</title>
-  <link rel="stylesheet" href="assets/css/styles.css" />
-  <!-- Markdown renderer + sanitizer from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
+  <!-- =========================
+       Inline CSS (branding + layout)
+       ========================= -->
+  <style>
+    :root {
+      /* TODO: Brand colors */
+      --color-bg: #ffffff;
+      --color-text: #222222;
+      --color-muted: #666666;
+      --color-primary: #0a6cff;
+      --color-border: #e5e7eb;
+      --color-header-bg: #f8fafc;
+      --color-footer-bg: #f8fafc;
+      --color-toc-bg: #fafafa;
+    }
+    :root[data-theme="dark"] {
+      --color-bg: #0f172a;
+      --color-text: #e2e8f0;
+      --color-muted: #94a3b8;
+      --color-primary: #60a5fa;
+      --color-border: #1f2937;
+      --color-header-bg: #0b1220;
+      --color-footer-bg: #0b1220;
+      --color-toc-bg: #111827;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Helvetica Neue", sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+    /* Visually hidden (screen-reader only) */
+    .sr-only {
+      position: absolute !important;
+      height: 1px; width: 1px;
+      overflow: hidden; clip: rect(1px,1px,1px,1px);
+      white-space: nowrap;
+    }
+
+    /* Header: three columns; left has menu + logo, middle italic company name, right partner logo */
+    .header {
+      display: grid;
+      grid-template-columns: auto 1fr auto; /* left group | middle name | right partner */
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--color-header-bg);
+      border-bottom: 1px solid var(--color-border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .menu-button {
+      background: var(--color-primary);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+    .menu-button:focus { outline: 2px solid #fff; outline-offset: 2px; }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+    }
+    .logo img { height: 32px; width: auto; }
+    .company-name {
+      text-align: center;
+      font-style: italic;
+      font-weight: 600;
+    }
+    .partner { justify-self: end; }
+    .partner img { height: 28px; width: auto; }
+
+    /* Drawer */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 80;
+      display: none; /* shown via JS */
+    }
+    .drawer {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh; width: 320px;
+      background: var(--color-bg);
+      border-right: 1px solid var(--color-border);
+      box-shadow: 6px 0 12px rgba(0,0,0,0.2);
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      z-index: 90;
+      display: flex; flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .drawer-header img { height: 36px; width: auto; }
+    .drawer-content { flex: 1; overflow-y: auto; padding: 12px 16px; }
+    .drawer-content .section-title { font-weight: 600; margin: 12px 0 8px; }
+    .drawer-index { list-style: none; padding: 0; margin: 0; }
+    .drawer-index li { margin: 6px 0; }
+    .drawer-index a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--color-text);
+    }
+    .drawer-index a:hover { background: var(--color-header-bg); }
+    .drawer-footer {
+      border-top: 1px solid var(--color-border);
+      padding: 12px 16px;
+    }
+    .theme-toggle {
+      width: 100%; padding: 8px 10px; border-radius: 8px;
+      border: 1px solid var(--color-border); background: var(--color-header-bg);
+      color: var(--color-text); cursor: pointer;
+    }
+
+    /* Main layout: content + TOC on right */
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px; /* content | TOC */
+      gap: 24px;
+      padding: 24px 16px;
+    }
+    .article { max-width: 960px; }
+    .article img { max-width: 100%; height: auto; }
+    .article pre {
+      background: #0b1220; color: #e2e8f0; padding: 12px; border-radius: 8px;
+      overflow: auto;
+    }
+    .article table { border-collapse: collapse; width: 100%; }
+    .article th, .article td { border: 1px solid var(--color-border); padding: 8px; }
+
+    /* TOC */
+    .toc {
+      position: sticky;
+      top: 68px;
+      height: calc(100vh - 100px);
+      overflow: auto;
+      background: var(--color-toc-bg);
+      border-left: 1px solid var(--color-border);
+      padding: 12px;
+    }
+    .toc h3 { margin: 8px 0 10px; }
+    .toc ul { list-style: none; padding-left: 8px; }
+    .toc li { margin: 6px 0; }
+    .toc a { text-decoration: none; color: var(--color-muted); }
+    .toc a.active { color: var(--color-primary); font-weight: 600; }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--color-border);
+      background: var(--color-footer-bg);
+      padding: 14px 16px;
+      color: var(--color-muted);
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 1024px) {
+      .main { grid-template-columns: 1fr; }
+      .toc { display: none; } /* Hide TOC on mobile */
+    }
+    @media (max-width: 640px) {
+      /* Keep partner logo hidden on very small screens */
+      .partner { display: none; }
+    }
+
+    /* Optional: highlight when jumping via search/focus (future use) */
+    .mmv-highlight {
+      outline: 2px solid var(--color-primary);
+      border-radius: 6px;
+      padding: 2px;
+    }
+  </style>
 </head>
 <body>
-  <!-- Header: left logo (click → home), middle italic company name, right partner logo -->
+  <!-- =========================
+       Header: Menu (left) + Logo (left) | Company Name (center italic) | Partner (right)
+       ========================= -->
   <header class="header" role="banner">
-    <a href="#" id="homeLink" class="logo" aria-label="Home – Company">
-      <!-- TODO: Replace company logo source in app.js (CONFIG) -->
-      <img id="companyLogo" src="Company logo.png" alt="Company Logo" />
-      <span class="sr-only">Home</span>
-    </a>
+    <div class="header-left">
+      <button class="menu-button" id="menuButton" aria-controls="appDrawer" aria-expanded="false">☰ Menu</button>
+
+      <!-- Company logo (click → Home) -->
+      <a href="#" id="homeLink" class="logo" aria-label="Home">
+        <!-- TODO: You can keep this <img> empty; src will be set via JS CONFIG -->
+        <img id="companyLogo" alt="Company Logo" />
+        <span class="sr-only">Home</span>
+      </a>
+    </div>
+
     <div class="company-name" id="companyName">Your Company</div>
+
     <div class="partner">
-      <!-- TODO: Replace partner logo source in app.js (CONFIG) -->
-      <img id="partnerLogo" src="images/partner-logo.png" alt="Partner Logo" />
+      <!-- Partner logo (view-only) -->
+      <img id="partnerLogo" alt="Partner Logo" />
     </div>
   </header>
 
-  <!-- (Optional) Search box in header -->
-  <input
-    id="searchBox"
-    type="search"
-    placeholder="Search this manual…"
-    aria-label="Search this manual"
-    class="search-box-header" />
-
-  <!-- Floating Menu button (left side) -->
-  <button class="menu-button" id="menuButton" aria-controls="appDrawer" aria-expanded="false">☰ Menu</button>
-
-  <!-- Drawer (left) -->
+  <!-- =========================
+       Drawer (left)
+       ========================= -->
   <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
   <aside class="drawer" id="appDrawer" aria-hidden="true" aria-label="Menu">
     <div class="drawer-header">
-      <img id="drawerCompanyLogo" src="images/company-logo.png" alt="Company Logo" />
+      <img id="drawerCompanyLogo" alt="Company Logo" />
       <div id="drawerCompanyName">Your Company</div>
     </div>
     <div class="drawer-content">
@@ -53,7 +239,9 @@
     </div>
   </aside>
 
-  <!-- Main content area: viewer + right-side TOC -->
+  <!-- =========================
+       Main: Article + TOC
+       ========================= -->
   <main class="main" role="main">
     <article class="article" id="article" aria-label="Manual content"></article>
     <nav class="toc" id="toc" aria-label="Table of contents">
@@ -66,8 +254,288 @@
     <small>© <span id="footerYear"></span> <span id="footerCompany">Your Company</span>. All rights reserved.</small>
   </footer>
 
-  <!-- App logic -->
-  <script src="assets/js/app.js"></script>
+  <!-- =========================
+       Libraries: Marked + DOMPurify
+       ========================= -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
+  <!-- =========================
+       Inline App JS (single file)
+       ========================= -->
+  <script>
+    (function() {
+      // ----------------------------
+      // TODO: Set your brand assets here
+      // ----------------------------
+      const CONFIG = {
+        COMPANY_NAME: 'LendPerfect - User Manual',                 // Middle header (italic)
+        COMPANY_LOGO_SRC: 'Company logo.png',  // Header + drawer logo (you add this file)
+        PARTNER_LOGO_SRC: 'images/partner-logo.png',  // Right header logo (view-only)
+      };
+
+      // Your "Home" page Markdown (inline) – shown by default
+      const HOME_MD = `
+# Welcome to the User Manuals
+
+This site consolidates all user manuals into **one place** to avoid multiple file sends and confusion.
+
+## How to Use This Site
+
+- **Open the menu**: Click the **☰ Menu** button at the top-left.
+- **Pick a manual**: In the **Manuals** list (drawer), select the document you want to read. It opens in the main area.
+- **Follow sections with TOC**: The **Table of Contents** on the **right** (desktop) lists the sections of the current manual. Click any entry to **jump** to that section.
+- **On mobile**: The TOC is hidden to save space; use the **Menu** for navigation. Headings inside the manual are still anchorable.
+- **Dark/Light theme**: Use the **Toggle Dark/Light** switch at the bottom of the menu.
+
+## Helpful Tips
+
+- **Cross-links between manuals** work—if a page links to another \`.md\`, it opens in place.
+- **Images** scale to your screen.
+- **Back to Home**: Click the **company logo** (top-left) to return to this Home page.
+
+> If you need help or spot a broken link, notify the documentation team.
+      `;
+
+      // Manifest of manuals (first item is Home)
+      const MANIFEST = [
+        { title: 'Home', inline: true, md: HOME_MD },
+        {
+          title: 'PSB PMV Scheme – User Manual',
+          url: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md',
+          base: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/'
+        }
+        // Add more manuals here:
+        // { title: 'Another Manual (same repo)', url: 'https://raw.githubusercontent.com/ORG/REPO/BRANCH/docs/guide.md', base: 'https://raw.githubusercontent.com/ORG/REPO/BRANCH/docs/' }
+        // OR inline: { title: 'Inline Doc', inline: true, md: '# Title\\nContent...' }
+      ];
+
+      // Elements
+      const els = {
+        article: document.getElementById('article'),
+        tocList: document.getElementById('tocList'),
+        companyName: document.getElementById('companyName'),
+        companyLogo: document.getElementById('companyLogo'),
+        partnerLogo: document.getElementById('partnerLogo'),
+        drawerCompanyLogo: document.getElementById('drawerCompanyLogo'),
+        drawerCompanyName: document.getElementById('drawerCompanyName'),
+        drawerIndex: document.getElementById('drawerIndex'),
+        menuButton: document.getElementById('menuButton'),
+        drawer: document.getElementById('appDrawer'),
+        drawerBackdrop: document.getElementById('drawerBackdrop'),
+        themeToggle: document.getElementById('themeToggle'),
+        footerYear: document.getElementById('footerYear'),
+        footerCompany: document.getElementById('footerCompany'),
+        homeLink: document.getElementById('homeLink'),
+      };
+
+      // Init branding
+      function initBranding() {
+        els.companyName.textContent = CONFIG.COMPANY_NAME;
+        els.drawerCompanyName.textContent = CONFIG.COMPANY_NAME;
+        els.footerCompany.textContent = CONFIG.COMPANY_NAME;
+        els.footerYear.textContent = new Date().getFullYear();
+        if (CONFIG.COMPANY_LOGO_SRC) {
+          els.companyLogo.src = CONFIG.COMPANY_LOGO_SRC;
+          els.drawerCompanyLogo.src = CONFIG.COMPANY_LOGO_SRC;
+        }
+        if (CONFIG.PARTNER_LOGO_SRC) {
+          els.partnerLogo.src = CONFIG.PARTNER_LOGO_SRC;
+        }
+      }
+
+      // Theme handling
+      function applySavedTheme() {
+        const saved = localStorage.getItem('mmv-theme');
+        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        else document.documentElement.removeAttribute('data-theme');
+      }
+      function toggleTheme() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('mmv-theme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          localStorage.setItem('mmv-theme', 'dark');
+        }
+      }
+
+      // Drawer open/close
+      function openDrawer() {
+        els.drawer.classList.add('open');
+        els.drawer.setAttribute('aria-hidden', 'false');
+        els.drawerBackdrop.hidden = false;
+        els.drawerBackdrop.style.display = 'block';
+        els.menuButton.setAttribute('aria-expanded', 'true');
+      }
+      function closeDrawer() {
+        els.drawer.classList.remove('open');
+        els.drawer.setAttribute('aria-hidden', 'true');
+        els.drawerBackdrop.hidden = true;
+        els.drawerBackdrop.style.display = 'none';
+        els.menuButton.setAttribute('aria-expanded', 'false');
+      }
+      els.menuButton.addEventListener('click', () => {
+        const open = els.menuButton.getAttribute('aria-expanded') === 'true';
+        if (open) closeDrawer(); else openDrawer();
+      });
+      els.drawerBackdrop.addEventListener('click', closeDrawer);
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
+      // Build index in drawer
+      function buildIndex() {
+        els.drawerIndex.innerHTML = '';
+        MANIFEST.forEach(item => {
+          const li = document.createElement('li');
+          const a = document.createElement('a');
+          a.href = '#';
+          a.textContent = item.title || (item.inline ? 'Inline doc' : item.url);
+          a.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadManual(item);
+            closeDrawer();
+          });
+          li.appendChild(a);
+          els.drawerIndex.appendChild(li);
+        });
+      }
+
+      // Rewrite relatives (external base)
+      function rewriteRelativeUrlsWithBase(mdText, base) {
+        function toRawUrl(rel) {
+          if (/^(https?:)?\/\//i.test(rel)) return rel;
+          if (rel.startsWith('#')) return rel;
+          if (rel.startsWith('/')) {
+            const clean = rel.replace(/^\//, '');
+            // Treat root-relative as repo root of base
+            return base.replace(/[^/]+$/, '') + clean;
+          }
+          return base + rel;
+        }
+        mdText = mdText.replace(/(!\[[^\]]*\]\()([^\)]+)(\))/g, (m, p1, url, p3) => p1 + toRawUrl(url) + p3);
+        mdText = mdText.replace(/(\[[^\]]*\]\()([^\)]+)(\))/g, (m, p1, url, p3) => p1 + toRawUrl(url) + p3);
+        return mdText;
+      }
+
+      // Build TOC from headings
+      function buildToc() {
+        const headings = els.article.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        const tocItems = [];
+        headings.forEach(h => {
+          if (!h.id) {
+            h.id = h.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+          }
+          tocItems.push({ level: parseInt(h.tagName.substring(1), 10), text: h.textContent, id: h.id });
+        });
+        els.tocList.innerHTML = '';
+        tocItems.forEach(item => {
+          const li = document.createElement('li');
+          li.style.paddingLeft = ((item.level - 1) * 12) + 'px';
+          const a = document.createElement('a');
+          a.href = '#' + item.id;
+          a.textContent = item.text;
+          li.appendChild(a);
+          els.tocList.appendChild(li);
+        });
+        // Scroll spy
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            const id = entry.target.id;
+            const link = els.tocList.querySelector(`a[href="#${id}"]`);
+            if (link) {
+              if (entry.isIntersecting) link.classList.add('active');
+              else link.classList.remove('active');
+            }
+          });
+        }, { rootMargin: '0px 0px -70% 0px', threshold: 0.1 });
+        headings.forEach(h => observer.observe(h));
+      }
+
+      // Load manual (inline or external URL)
+      async function loadManual(item) {
+        els.article.innerHTML = '<p>Loading…</p>';
+        try {
+          let mdText = '';
+          if (item.inline) {
+            mdText = item.md;
+          } else {
+            const resp = await fetch(item.url);
+            if (!resp.ok) throw new Error('Failed to fetch: ' + resp.status);
+            mdText = await resp.text();
+            if (item.base) mdText = rewriteRelativeUrlsWithBase(mdText, item.base);
+          }
+
+          // Render Markdown
+          marked.setOptions({ gfm: true, breaks: false, headerIds: true, mangle: false });
+          const html = marked.parse(mdText);
+          const safe = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+          els.article.innerHTML = safe;
+
+          // Intercept md links to other .md files for SPA-like navigation
+          els.article.querySelectorAll('a[href]').forEach(a => {
+            const href = a.getAttribute('href');
+            const isAbs = /^(https?:)?\/\//i.test(href);
+            const isMd = /\.md($|#|\?)/.test(href);
+            if (isMd) {
+              a.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (isAbs) {
+                  const nextBase = href.replace(/[^/]+$/, '');
+                  loadManual({ title: href, url: href, base: nextBase });
+                } else if (item.inline) {
+                  // Relative from inline (no base): cannot resolve reliably; ignore
+                  alert('This link is relative and cannot be resolved from the inline Home page.');
+                } else if (item.base) {
+                  const full = href.startsWith('/') ? (item.base.replace(/docs\/?$/, '') + href.replace(/^\//, '')) : (item.base + href);
+                  const nextBase = full.replace(/[^/]+$/, '');
+                  loadManual({ title: href, url: full, base: nextBase });
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              });
+            }
+          });
+
+          buildToc();
+
+          // Update URL hash (deep-link)
+          const encoded = encodeURIComponent(item.inline ? 'HOME' : item.url);
+          history.replaceState(null, '', `#manual=${encoded}`);
+        } catch (err) {
+          els.article.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+        }
+      }
+
+      // Load from hash if present
+      function loadManualFromHash() {
+        const m = location.hash.match(/manual=([^&]+)/);
+        if (m) {
+          const key = decodeURIComponent(m[1]);
+          if (key === 'HOME') return loadManual(MANIFEST[0]);
+          const found = MANIFEST.find(x => x.url === key);
+          if (found) return loadManual(found);
+        }
+      }
+
+      // Logo → Home
+      els.homeLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadManual(MANIFEST[0]); // Home
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // Theme toggle
+      els.themeToggle.addEventListener('click', toggleTheme);
+
+      // Init
+      initBranding();
+      applySavedTheme();
+      buildIndex();
+      // Default load: Home (or hash)
+      if (!loadManualFromHash()) loadManual(MANIFEST[0]);
+    })();
+  </script>
 </body>
 </html>
 ``
+
