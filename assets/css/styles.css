@@ -1,0 +1,202 @@
+
+/* =============================================================
+   Multi-Manual Viewer – Stylesheet
+   -------------------------------------------------------------
+   Customize variables below to match your brand.
+   The site supports dark/light themes via [data-theme] attribute.
+   ============================================================= */
+
+:root {
+  /* TODO: Brand colors */
+  --color-bg: #ffffff;
+  --color-text: #222222;
+  --color-muted: #666666;
+  --color-primary: #0a6cff;
+  --color-border: #e5e7eb;
+  --color-header-bg: #f8fafc;
+  --color-footer-bg: #f8fafc;
+  --color-toc-bg: #fafafa;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #0f172a;
+  --color-text: #e2e8f0;
+  --color-muted: #94a3b8;
+  --color-primary: #60a5fa;
+  --color-border: #1f2937;
+  --color-header-bg: #0b1220;
+  --color-footer-bg: #0b1220;
+  --color-toc-bg: #111827;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Helvetica Neue", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Header */
+.header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* left, middle, right */
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--color-header-bg);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.header .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+}
+.header .logo img { height: 32px; width: auto; }
+.header .company-name {
+  text-align: center;
+  font-style: italic; /* requirement: italic company name in middle */
+  font-weight: 600;
+}
+.header .partner { justify-self: end; }
+.header .partner img { height: 28px; width: auto; }
+
+/* Search box styling */
+.search-box-header {
+  display: block;
+  margin: 8px auto 0;
+  max-width: 520px;
+  width: calc(100% - 32px);
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Floating menu button on left side */
+.menu-button {
+  position: fixed;
+  left: 12px;
+  bottom: 24px; /* visible on mobile and desktop */
+  z-index: 60;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+.menu-button:focus { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Drawer */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 80;
+  display: none; /* toggled via JS */
+}
+.drawer {
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh; width: 320px;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  box-shadow: 6px 0 12px rgba(0,0,0,0.2);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  z-index: 90;
+  display: flex; flex-direction: column;
+}
+.drawer.open { transform: translateX(0); }
+.drawer-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.drawer-header img { height: 36px; width: auto; }
+.drawer-content { flex: 1; overflow-y: auto; padding: 12px 16px; }
+.drawer-content .section-title { font-weight: 600; margin: 12px 0 8px; }
+.drawer-index { list-style: none; padding: 0; margin: 0; }
+.drawer-index li { margin: 6px 0; }
+.drawer-index a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--color-text);
+}
+.drawer-index a:hover { background: var(--color-header-bg); }
+.drawer-footer { border-top: 1px solid var(--color-border); padding: 12px 16px; }
+.theme-toggle {
+  width: 100%; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--color-border); background: var(--color-header-bg);
+  color: var(--color-text); cursor: pointer;
+}
+
+/* Main layout: content + TOC */
+.main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px; /* content + right TOC */
+  gap: 24px;
+  padding: 24px 16px;
+}
+.article { max-width: 960px; }
+.article img { max-width: 100%; height: auto; }
+.article pre {
+  background: #0b1220; color: #e2e8f0; padding: 12px; border-radius: 8px;
+  overflow: auto;
+}
+.article table { border-collapse: collapse; width: 100%; }
+.article th, .article td { border: 1px solid var(--color-border); padding: 8px; }
+
+/* TOC */
+.toc {
+  position: sticky;
+  top: 68px; /* keep below header */
+  height: calc(100vh - 132px); /* accommodates search box */
+  overflow: auto;
+  background: var(--color-toc-bg);
+  border-left: 1px solid var(--color-border);
+  padding: 12px;
+}
+.toc h3 { margin: 8px 0 10px; }
+.toc ul { list-style: none; padding-left: 8px; }
+.toc li { margin: 6px 0; }
+.toc a { text-decoration: none; color: var(--color-muted); }
+.toc a.active { color: var(--color-primary); font-weight: 600; }
+
+/* Footer */
+.footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-footer-bg);
+  padding: 14px 16px;
+  color: var(--color-muted);
+}
+
+/* Highlight for search results */
+.mmv-highlight {
+  outline: 2px solid var(--color-primary);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+/* Mobile tweaks */
+@media (max-width: 1024px) {
+  .main { grid-template-columns: 1fr; }
+  .toc { display: none; }
+}
+@media (max-width: 640px) {
+  .header { grid-template-columns: 1fr 1fr; }
+  .header .partner { display: none; }
+  .menu-button { bottom: 16px; left: 12px; }
+}
+``
