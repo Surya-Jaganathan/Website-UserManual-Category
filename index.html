@@ -12,23 +12,28 @@
       --color-text: #1f2937;
       --color-muted: #6b7280;
       --color-primary: #0a6cff;
-      --color-border: #e5e7eb;
+      --color-border: #d1d5db;            /* higher contrast in light */
       --color-header-bg: #f8fafc;
       --color-card-bg: #ffffff;
       --color-hover: #eef2ff;
       --color-toc-bg: #f9fafb;
+
+      --shadow: 0 2px 10px rgba(0,0,0,0.08);
     }
     :root[data-theme="dark"] {
       --color-bg: #0f172a;
       --color-text: #e5e7eb;
       --color-muted: #9ca3af;
       --color-primary: #60a5fa;
-      --color-border: #1f2937;
+      --color-border: #334155;            /* higher contrast in dark */
       --color-header-bg: #0b1220;
       --color-card-bg: #0b1220;
       --color-hover: #172554;
       --color-toc-bg: #0b1220;
+
+      --shadow: 0 2px 10px rgba(0,0,0,0.35);
     }
+
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
@@ -64,13 +69,14 @@
       align-items: center;
       gap: 10px;
     }
+    /* Menu blends with header (no border) */
     .menu-button {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       background: transparent;
       color: var(--color-text);
-      border: 1px solid var(--color-border);
+      border: none;
       border-radius: 6px;
       padding: 6px;
       width: 38px; height: 38px;
@@ -117,14 +123,9 @@
       display: flex; flex-direction: column;
     }
     .drawer.open { transform: translateX(0); }
-    .drawer-header {
-      display: flex; align-items: center; gap: 10px;
-      padding: 16px;
-      border-bottom: 1px solid var(--color-border);
-    }
-    .drawer-header img { height: 36px; width: auto; }
+    /* Removed drawer logo row to avoid duplicate visuals */
     .drawer-content { flex: 1; overflow-y: auto; padding: 12px 16px; }
-    .drawer-content .section-title { font-weight: 600; margin: 12px 0 8px; }
+    .drawer-content .section-title { font-weight: 600; margin: 4px 0 8px; }
     .drawer-index { list-style: none; padding: 0; margin: 0; }
     .drawer-index li { margin: 6px 0; }
     .drawer-index a {
@@ -140,25 +141,57 @@
       border-top: 1px solid var(--color-border);
       padding: 12px 16px;
     }
-    .theme-toggle {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--color-border);
-      background: var(--color-header-bg);
-      color: var(--color-text);
-      cursor: pointer;
+
+    /* Round theme switch */
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
       font-weight: 600;
+      color: var(--color-text);
     }
-    .theme-toggle:hover { background: var(--color-hover); }
+    .switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .slider {
+      width: 48px;
+      height: 26px;
+      background: var(--color-border);
+      border: 2px solid var(--color-border);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .slider::after {
+      content: "";
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 20px; height: 20px;
+      background: var(--color-card-bg);
+      border-radius: 50%;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease;
+    }
+    .switch input:checked + .slider {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    .switch input:checked + .slider::after {
+      transform: translateX(22px);
+    }
 
     /* Cards / layout */
     .card {
       background: var(--color-card-bg);
-      border: 1px solid var(--color-border);
+      border: 1.5px solid var(--color-border);  /* thicker for contrast */
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      box-shadow: var(--shadow);
     }
+
+    /* Fixed TOC on the right */
     .toc-card {
       position: fixed;
       top: 80px; right: 16px;
@@ -168,10 +201,20 @@
       background: var(--color-toc-bg);
       overflow: auto;
       z-index: 800;
+      /* Slim scrollbar */
+      scrollbar-width: thin;               /* Firefox */
+      scrollbar-color: var(--color-border) transparent;
     }
+    .toc-card::-webkit-scrollbar { width: 8px; }        /* WebKit */
+    .toc-card::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 999px;
+    }
+    .toc-card::-webkit-scrollbar-track { background: transparent; }
+
     .toc-card h3 { margin: 8px 0 10px; font-size: 16px; font-weight: 600; }
     .toc-list { list-style: none; padding-left: 8px; margin: 0; }
-    .toc-list li { margin: 6px 0; }
+    .toc-list li { margin: 4px 0; }
     .toc-list a {
       display: block;
       padding: 6px 8px;
@@ -187,16 +230,35 @@
     }
     .toc-list a.active {
       color: var(--color-primary);
-      font-weight: 600;
+      font-weight: 700;
       border-color: var(--color-border);
+      background: transparent;
     }
 
+    /* Main viewer: scroll inside the card */
     .main-card {
       margin-right: 360px; /* leave space for fixed TOC */
       margin-left: 16px;
       margin-top: 16px;
-      padding: 20px;
+      padding: 0; /* content area handles its own padding */
+      height: calc(100vh - 96px); /* viewport minus header + margins */
+      overflow: hidden; /* contain the internal scroll element */
     }
+    /* Internal scroller for article */
+    .article-scroll {
+      padding: 20px;
+      height: 100%;
+      overflow: auto;
+      scrollbar-width: thin;               /* Firefox */
+      scrollbar-color: var(--color-border) transparent;
+    }
+    .article-scroll::-webkit-scrollbar { width: 8px; }   /* WebKit */
+    .article-scroll::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 999px;
+    }
+    .article-scroll::-webkit-scrollbar-track { background: transparent; }
+
     .article img { max-width: 100%; height: auto; }
     .article pre {
       background: #0b1220; color: #e2e8f0; padding: 12px; border-radius: 8px;
@@ -204,6 +266,17 @@
     }
     .article table { border-collapse: collapse; width: 100%; }
     .article th, .article td { border: 1px solid var(--color-border); padding: 8px; }
+    /* Blockquotes */
+    .article blockquote {
+      border-left: 4px solid var(--color-primary);
+      padding: 8px 12px;
+      margin: 8px 0 12px 0;
+      background: rgba(10, 108, 255, 0.08);
+      border-radius: 6px;
+    }
+    :root[data-theme="dark"] .article blockquote {
+      background: rgba(96, 165, 250, 0.12);
+    }
 
     @media (max-width: 1024px) {
       .toc-card { display: none; }
@@ -226,7 +299,7 @@
       </button>
 
       <!-- Company logo (click → Home) -->
-      <a href="#" class="logo" id="homeLink">
+      <a class="logo" href="#" id="homeLink">
         <img id="companyLogo" alt="Company Logo" />
         <span class="sr-only">Home</span>
       </a>
@@ -242,15 +315,17 @@
   <!-- Drawer -->
   <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
   <aside class="drawer" id="appDrawer" aria-hidden="true" aria-label="Menu">
-    <div class="drawer-header">
-      <img id="drawerCompanyLogo" alt="Company Logo" />
-    </div>
     <div class="drawer-content">
       <div class="section-title">Manuals</div>
       <ul class="drawer-index" id="drawerIndex"></ul>
     </div>
     <div class="drawer-footer">
-      <button class="theme-toggle" id="themeToggle" type="button">Toggle Dark/Light</button>
+      <!-- Round switch -->
+      <label class="switch" for="themeSwitch">
+        <span>Dark / Light</span>
+        <input type="checkbox" id="themeSwitch" aria-label="Toggle dark and light theme" />
+        <span class="slider" role="switch" aria-checked="false"></span>
+      </label>
     </div>
   </aside>
 
@@ -260,10 +335,12 @@
     <ul class="toc-list" id="tocList"></ul>
   </nav>
 
-  <!-- Main -->
-  <main class="layout" role="main">
+  <!-- Main (article scroller inside the card) -->
+  <main role="main">
     <section class="card main-card">
-      <article class="article" id="article" aria-label="Manual content"></article>
+      <div class="article-scroll">
+        <article class="article" id="article" aria-label="Manual content"></article>
+      </div>
     </section>
   </main>
 
@@ -296,15 +373,9 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
 - **Pick a manual**: In the **Manuals** list (drawer), select the document you want to read. It opens in the main area.
 - **Follow sections with TOC**: The **Table of Content** on the **right** (desktop) lists the sections of the current manual. Click any entry to **jump** to that section.
 - **On mobile**: The TOC is hidden to save space; use the **Menu** for navigation. Headings inside the manual are still anchorable.
-- **Dark/Light theme**: Use the **Toggle Dark/Light** button at the bottom of the menu.
+- **Dark/Light theme**: Use the round switch at the bottom of the menu.
 
-## Helpful Tips
-
-- **Cross-links between manuals** work—if a page links to another \`.md\`, it opens in place.
-- **Images** scale to your screen.
-- **Back to Home**: Click the **company logo** (top-left) to return to this Home page.
-
-> If you need help or spot a broken link, notify the documentation team.
+> Tip: Cross-links between manuals open in place. Images are responsive. Click the **company logo** to return to this Home page.
       `;
 
       // ---------- Manifest ----------
@@ -315,6 +386,8 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           url: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md',
           base: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/'
         }
+        // Add more manuals:
+        // { title: 'Another Manual', url: 'https://raw.githubusercontent.com/ORG/REPO/BRANCH/docs/guide.md', base: 'https://raw.githubusercontent.com/ORG/REPO/BRANCH/docs/' }
       ];
 
       // ---------- Elements ----------
@@ -324,12 +397,12 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         companyName: document.getElementById('companyName'),
         companyLogo: document.getElementById('companyLogo'),
         partnerLogo: document.getElementById('partnerLogo'),
-        drawerCompanyLogo: document.getElementById('drawerCompanyLogo'),
         drawerIndex: document.getElementById('drawerIndex'),
         menuButton: document.getElementById('menuButton'),
         drawer: document.getElementById('appDrawer'),
         drawerBackdrop: document.getElementById('drawerBackdrop'),
-        themeToggle: document.getElementById('themeToggle'),
+        themeSwitch: document.getElementById('themeSwitch'),
+        slider: document.querySelector('.slider'),
         homeLink: document.getElementById('homeLink'),
       };
 
@@ -343,26 +416,32 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
       function initBranding() {
         els.companyName.textContent = CONFIG.COMPANY_NAME;
         setLogo(els.companyLogo, CONFIG.COMPANY_LOGO_SRC);
-        setLogo(els.drawerCompanyLogo, CONFIG.COMPANY_LOGO_SRC);
         setLogo(els.partnerLogo, CONFIG.PARTNER_LOGO_SRC);
       }
 
+      // Theme (round switch)
       function applySavedTheme() {
         const saved = localStorage.getItem('mmv-theme');
-        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        const isDark = (saved === 'dark');
+        if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
         else document.documentElement.removeAttribute('data-theme');
+        els.themeSwitch.checked = isDark;
+        els.slider.setAttribute('aria-checked', String(isDark));
       }
       function toggleTheme() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const isDark = els.themeSwitch.checked;
         if (isDark) {
-          document.documentElement.removeAttribute('data-theme');
-          localStorage.setItem('mmv-theme', 'light');
-        } else {
           document.documentElement.setAttribute('data-theme', 'dark');
           localStorage.setItem('mmv-theme', 'dark');
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          localStorage.setItem('mmv-theme', 'light');
         }
+        els.slider.setAttribute('aria-checked', String(isDark));
       }
+      els.themeSwitch.addEventListener('change', toggleTheme);
 
+      // Drawer
       function openDrawer() {
         els.drawer.classList.add('open');
         els.drawer.setAttribute('aria-hidden', 'false');
@@ -377,14 +456,21 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         els.drawerBackdrop.style.display = 'none';
         els.menuButton.setAttribute('aria-expanded', 'false');
       }
+      els.menuButton.addEventListener('click', () => {
+        const open = els.menuButton.getAttribute('aria-expanded') === 'true';
+        if (open) closeDrawer(); else openDrawer();
+      });
+      els.drawerBackdrop.addEventListener('click', closeDrawer);
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
 
+      // Index (skip Home in the menu list)
       function buildIndex() {
         els.drawerIndex.innerHTML = '';
-        MANIFEST.forEach(item => {
+        MANIFEST.filter(x => !x.inline).forEach(item => {
           const li = document.createElement('li');
           const a = document.createElement('a');
           a.href = '#';
-          a.textContent = item.title || (item.inline ? 'Inline doc' : item.url);
+          a.textContent = item.title || item.url;
           a.addEventListener('click', (e) => {
             e.preventDefault();
             loadManual(item);
@@ -395,25 +481,27 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         });
       }
 
+      // More robust rewriting for external manuals
+      function ensureTrailingSlash(s) {
+        return s.endsWith('/') ? s : (s + '/');
+      }
       function rewriteRelativeUrlsWithBase(mdText, base) {
+        const baseDir = ensureTrailingSlash(base);      // directory for the md file
+        const repoRoot = baseDir;                       // treat provided base as repo root for '/path'
         function toRawUrl(rel) {
           if (/^(https?:)?\/\//i.test(rel)) return rel;
           if (rel.startsWith('#')) return rel;
-          if (rel.starts_with && rel.starts_with('/')) { /* some browsers */
-            rel = rel.replace(/^\//, '');
-            return base.replace(/[^/]+$/, '') + rel;
+          if (rel.startsWith('/')) {
+            return repoRoot + rel.slice(1);            // root-relative
           }
-          if (rel.charAt && rel.charAt(0) === '/') {
-            const clean = rel.replace(/^\//, '');
-            return base.replace(/[^/]+$/, '') + clean;
-          }
-          return base + rel;
+          return baseDir + rel;                         // file-relative
         }
         mdText = mdText.replace(/(!\[[^\]]*\]\()([^\)]+)(\))/g, (m, p1, url, p3) => p1 + toRawUrl(url) + p3);
         mdText = mdText.replace(/(\[[^\]]*\]\()([^\)]+)(\))/g, (m, p1, url, p3) => p1 + toRawUrl(url) + p3);
         return mdText;
       }
 
+      // TOC (only one active at a time)
       function buildToc() {
         const headings = els.article.querySelectorAll('h1, h2, h3, h4, h5, h6');
         const tocItems = [];
@@ -423,6 +511,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           }
           tocItems.push({ level: parseInt(h.tagName.substring(1), 10), text: h.textContent, id: h.id });
         });
+
         els.tocList.innerHTML = '';
         tocItems.forEach(item => {
           const li = document.createElement('li');
@@ -434,18 +523,44 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           els.tocList.appendChild(li);
         });
 
-        // Scroll spy
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            const id = entry.target.id;
-            const link = els.tocList.querySelector(`a[href="#${id}"]`);
-            if (link) {
-              if (entry.isIntersecting) link.classList.add('active');
-              else link.classList.remove('active');
+        // Single-active behavior: pick the closest heading to the top of the article scroller
+        function updateActiveToc() {
+          const scrollbox = document.querySelector('.article-scroll');
+          const boxTop = scrollbox.getBoundingClientRect().top;
+          let best = null;
+          headings.forEach(h => {
+            const rect = h.getBoundingClientRect();
+            const distance = Math.abs(rect.top - boxTop);
+            // Prefer headings at/after top to avoid earlier ones when scrolled down
+            const isBelowTop = rect.top >= boxTop - 2;
+            if (isBelowTop && (!best || distance < best.distance)) {
+              best = { id: h.id, distance };
             }
           });
-        }, { rootMargin: '0px 0px -70% 0px', threshold: 0.1 });
-        headings.forEach(h => observer.observe(h));
+          // Fallback: if none below top, choose the last heading above
+          if (!best) {
+            let lastAbove = null;
+            headings.forEach(h => {
+              const rect = h.getBoundingClientRect();
+              if (rect.top < boxTop - 2) lastAbove = h.id;
+            });
+            if (lastAbove) best = { id: lastAbove, distance: 0 };
+          }
+          // Apply single active
+          els.tocList.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+          if (best && best.id) {
+            const active = els.tocList.querySelector(`a[href="#${best.id}"]`);
+            if (active) active.classList.add('active');
+          }
+        }
+        // Bind scroll for single-active behavior
+        const scrollbox = document.querySelector('.article-scroll');
+        scrollbox.addEventListener('scroll', () => {
+          // throttle via rAF
+          window.requestAnimationFrame(updateActiveToc);
+        });
+        // Initial state
+        updateActiveToc();
       }
 
       async function loadManual(item) {
@@ -480,18 +595,22 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
                 } else if (item.inline) {
                   alert('This relative link cannot be resolved from Home.');
                 } else if (item.base) {
-                  const full = href.startsWith('/') ? (item.base.replace(/docs\/?$/, '') + href.replace(/^\//, '')) : (item.base + href);
+                  const full = href.startsWith('/') ? (ensureTrailingSlash(item.base) + href.replace(/^\//, ''))
+                                                    : (ensureTrailingSlash(item.base) + href);
                   const nextBase = full.replace(/[^/]+$/, '');
                   loadManual({ title: href, url: full, base: nextBase });
                 }
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                document.querySelector('.article-scroll').scrollTop = 0;
               });
             }
           });
 
           buildToc();
+
           const encoded = encodeURIComponent(item.inline ? 'HOME' : item.url);
           history.replaceState(null, '', `#manual=${encoded}`);
+          // Ensure we start at top of internal scroller
+          document.querySelector('.article-scroll').scrollTop = 0;
         } catch (err) {
           els.article.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
         }
@@ -508,18 +627,17 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
       }
 
       // Events
+      els.drawerBackdrop.addEventListener('click', closeDrawer);
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
       els.menuButton.addEventListener('click', () => {
         const open = els.menuButton.getAttribute('aria-expanded') === 'true';
         if (open) closeDrawer(); else openDrawer();
       });
-      els.drawerBackdrop.addEventListener('click', closeDrawer);
-      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
       els.homeLink.addEventListener('click', (e) => {
         e.preventDefault();
         loadManual(MANIFEST[0]); // Home
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.querySelector('.article-scroll').scrollTop = 0;
       });
-      els.themeToggle.addEventListener('click', toggleTheme);
 
       // Init
       initBranding();
@@ -529,5 +647,5 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
     })();
   </script>
 </body>
-</html>
+</
 
