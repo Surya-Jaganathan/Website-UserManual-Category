@@ -207,13 +207,13 @@
       </button>
 
       <!-- Company logo (click → Home) -->
-      <a id="homeLink" class="logo" href="#">
+      <a href="#" class="logo" id="homeLink" aria-label="Home">
         <img id="companyLogo" alt="Company Logo" />
         <span class="sr-only">Home</span>
       </a>
     </div>
 
-    <div class="company-name" id="companyName">Lendperfect- User Manual</div>
+    <div class="company-name" id="companyName">Your Company</div>
 
     <div class="partner">
       <img id="partnerLogo" alt="Partner Logo" />
@@ -252,7 +252,7 @@
     </section>
   </main>
 
-  <!-- Libraries (CORRECT script tags) -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
@@ -261,8 +261,8 @@
     (function() {
       // ---------- CONFIG ----------
       const CONFIG = {
-        COMPANY_NAME: 'Lendperfect - User Manual',
-        COMPANY_LOGO_SRC: 'Company logo.png',
+        COMPANY_NAME: 'Your Company',
+        COMPANY_LOGO_SRC: 'images/company-logo.png',
         PARTNER_LOGO_SRC: 'images/partner-logo.png',
         FALLBACK_LOGO_DATAURI:
           'data:image/svg+xml;utf8,' +
@@ -286,19 +286,22 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
 > Tip: Cross-links between manuals open in place. Images are responsive. Click the **company logo** to return to this Home page.
       `;
 
-      // ---------- Manifest (Home is inline; NOT shown in menu index) ----------
+      // ---------- Manifest (Home inline; NOT shown in menu index) ----------
       const MANIFEST = [
         { title: 'Home', inline: true, md: HOME_MD },
+
         {
           title: 'PSB PMV Scheme – User Manual',
           url: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/README.md',
-          base: 'https://github.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/'
+          base: 'https://raw.githubusercontent.com/Surya-Jaganathan/PSB-PMV-scheme-user-manual/refs/heads/main/'
         },
         {
           title: 'Getting Started',
           url: 'https://raw.githubusercontent.com/Surya-Jaganathan/Website-UserManual-Category/refs/heads/main/getting-started.md',
           base: 'https://raw.githubusercontent.com/Surya-Jaganathan/Website-UserManual-Category/refs/heads/main/'
         }
+        // Add more manuals as needed:
+        // { title: 'Admin Guide', url: 'https://raw.githubusercontent.com/ORG/REPO/refs/heads/main/docs/admin.md', base: 'https://raw.githubusercontent.com/ORG/REPO/refs/heads/main/docs/' }
       ];
 
       // ---------- Elements ----------
@@ -393,26 +396,56 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
         });
       }
 
-      // Robust rewriting for external manuals
+      // ---------- Robust resolver for external manuals ----------
       function ensureTrailingSlash(s) { return s.endsWith('/') ? s : (s + '/'); }
+
+      /**
+       * Rewrites relative URLs in Markdown to absolute URLs using WHATWG URL
+       * - Handles ./, ../, and root-relative (/path)
+       * - Leaves anchors (#...), absolute URLs, queries, and fragments intact
+       * - Works for both images and links in Markdown syntax
+       */
       function rewriteRelativeUrlsWithBase(mdText, base) {
-        const baseDir = ensureTrailingSlash(base);
-        const repoRoot = baseDir; // treat provided base as root for '/path'
-        function toRawUrl(rel) {
-          if (/^(https?:)?\/\//i.test(rel)) return rel;
-          if (rel.startsWith('#')) return rel;
-          if (rel.startsWith('/')) return repoRoot + rel.slice(1); // root-relative
-          return baseDir + rel;                                    // file-relative
+        const baseUrl = ensureTrailingSlash(base);
+
+        function resolveUrl(rel) {
+          try {
+            if (rel.startsWith('#')) return rel;                        // anchor stays
+            if (/^(https?:)?\/\//i.test(rel)) return rel;               // already absolute
+            return new URL(rel, baseUrl).href;                          // robust resolution (encodes spaces)
+          } catch (e) {
+            return rel;                                                 // keep original if malformed
+          }
         }
-        mdText = mdText.replace(/(!\[[^\]]*\]\()([^\)]+)(\))/g, (m, p1, url, p3) => p1 + toRawUrl(url) + p3);
-        mdText = mdText.replace(/(\[[^\]]*\]\()([^\)]+)(\))/g, (m, p1, url, p3) => p1 + toRawUrl(url) + p3);
+
+        // Markdown image: url
+        mdText = mdText.replace(/(!\[[^\]]*]\()([^)]+)(\))/g, (m, p1, url, p3) => p1 + resolveUrl(url) + p3);
+
+        // Markdown link: url
+        mdText = mdText.replace(/(\[[^\]]*]\()([^)]+)(\))/g, (m, p1, url, p3) => p1 + resolveUrl(url) + p3);
+
         return mdText;
+      }
+
+      /**
+       * OPTIONAL: After rendering, fix raw HTML <img> tags that use relative src.
+       * Call this for external manuals (not inline Home).
+       */
+      function rewriteHtmlImgSrc(container, base) {
+        const baseUrl = ensureTrailingSlash(base);
+        container.querySelectorAll('img[src]').forEach(img => {
+          const src = img.getAttribute('src');
+          if (!src) return;
+          if (src.startsWith('#') || /^(https?:)?\/\//i.test(src)) return; // leave absolute/anchors
+          try {
+            img.src = new URL(src, baseUrl).href; // robust resolution (encodes spaces)
+          } catch (_) { /* keep original if malformed */ }
+        });
       }
 
       // Build TOC and keep exactly ONE active at a time
       function buildToc() {
         const headings = Array.from(els.article.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-        // Ensure IDs + collect positions (relative to article)
         const positions = headings.map(h => {
           if (!h.id) h.id = h.textContent.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
           return { id: h.id, top: h.offsetTop };
@@ -428,7 +461,6 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           const a = document.createElement('a');
           a.href = '#' + id;
           a.textContent = h.textContent;
-          // Smooth-scroll inside the article card
           a.addEventListener('click', (e) => {
             e.preventDefault();
             const target = document.getElementById(id);
@@ -472,6 +504,8 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
             const resp = await fetch(item.url);
             if (!resp.ok) throw new Error('Failed to fetch: ' + resp.status);
             mdText = await resp.text();
+
+            // ✅ Rewrite relative images/links inside external Markdown using BASE
             if (item.base) mdText = rewriteRelativeUrlsWithBase(mdText, item.base);
           }
 
@@ -479,6 +513,9 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
           const html = marked.parse(mdText);
           const safe = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
           els.article.innerHTML = safe;
+
+          // ✅ OPTIONAL: fix raw HTML <img> tags that use relative src (common in some READMEs)
+          if (!item.inline && item.base) rewriteHtmlImgSrc(els.article, item.base);
 
           // Intercept md links for SPA-like navigation
           els.article.querySelectorAll('a[href]').forEach(a => {
@@ -494,9 +531,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
                 } else if (item.inline) {
                   alert('This relative link cannot be resolved from Home.');
                 } else if (item.base) {
-                  const full = href.startsWith('/')
-                    ? (ensureTrailingSlash(item.base) + href.replace(/^\//, ''))
-                    : (ensureTrailingSlash(item.base) + href);
+                  const full = new URL(href, ensureTrailingSlash(item.base)).href;
                   const nextBase = full.replace(/[^/]+$/, '');
                   loadManual({ title: href, url: full, base: nextBase });
                 }
@@ -525,7 +560,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
       }
 
       // Events
-      els.homeLink.addEventListener('click', (e) => {
+      document.getElementById('homeLink').addEventListener('click', (e) => {
         e.preventDefault();
         loadManual(MANIFEST[0]); // Home
         els.articleScroll.scrollTop = 0;
@@ -533,6 +568,7 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
 
       // Init
       initBranding();
+      const savedThemeInit = localStorage.getItem('mmv-theme');
       applySavedTheme();
       buildIndex();
       if (!loadManualFromHash()) loadManual(MANIFEST[0]); // default Home
@@ -540,5 +576,3 @@ This site consolidates all user manuals into **one place** to avoid multiple fil
   </script>
 </body>
 </html>
-``
-
